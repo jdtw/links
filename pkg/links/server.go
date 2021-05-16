@@ -9,7 +9,7 @@ import (
 )
 
 type server struct {
-	kv KV
+	kv *KV
 	ks jwk.Set
 	*mux.Router
 }
@@ -33,7 +33,7 @@ func (s *server) routes() {
 }
 
 // NewHandler sets up routes based on the given key value store.
-func NewHandler(kv KV, ks jwk.Set) http.Handler {
+func NewHandler(kv *KV, ks jwk.Set) http.Handler {
 	srv := &server{kv, ks, mux.NewRouter()}
 	srv.routes()
 	return srv

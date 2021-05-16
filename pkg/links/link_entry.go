@@ -58,10 +58,7 @@ func (s *server) putLinkEntry(k string, l *pb.Link) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if s.kv.Put(LinkKey(k), data) {
-		return true, nil
-	}
-	return false, nil
+	return s.kv.Put(LinkKey(k), data)
 }
 
 func (s *server) deleteLinkEntry(k string) {

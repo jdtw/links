@@ -12,16 +12,29 @@ import (
 )
 
 var (
-	priv = flag.String("priv", "", "Path to private key")
-	addr = flag.String("addr", "https://jdtw.us", "Appliction URI")
+	priv = flag.String("priv", "", "Path to private key; can also be specified via the LINKS_PRIVATE_KEY environment variable.")
+	addr = flag.String("addr", "", "Appliction URI; can also be specified via the LINKS_ADDR environment variable")
 	add  = flag.String("add", "", "Add a redirect")
-	to   = flag.String("to", "", "The redirect")
+	link = flag.String("link", "", "The redirect")
 	get  = flag.String("get", "", "Get a redirect")
 	rm   = flag.String("rm", "", "Remove a redirect")
 )
 
 func main() {
 	flag.Parse()
+
+	if *addr == "" {
+		*addr = os.Getenv("LINKS_ADDR")
+	}
+
+	if *addr == "" {
+		log.Fatal("missing 'addr' flag.")
+
+	}
+
+	if *priv == "" {
+		*priv = os.Getenv("LINKS_PRIVATE_KEY")
+	}
 
 	var pkcs8 []byte
 	if *priv != "" {
@@ -39,10 +52,10 @@ func main() {
 	c := client.New(*addr, pkcs8)
 	switch {
 	case *add != "":
-		if *to == "" {
-			log.Fatal("missing 'to' flag")
+		if *link == "" {
+			log.Fatal("missing 'link' flag")
 		}
-		if err := c.Put(*add, *to); err != nil {
+		if err := c.Put(*add, *link); err != nil {
 			log.Fatal(err)
 		}
 	case *get != "":

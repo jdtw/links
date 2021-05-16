@@ -1,56 +1,117 @@
 package links
 
-import "sync"
+import (
+	"io/fs"
+	"os"
+	"path/filepath"
+	"sync"
+)
 
-// KV is an interface for a key value store
-type KV interface {
-	// Put returns true if created for the first time
-	Add(map[string][]byte)
-	Put(string, []byte) bool
-	Get(string) []byte
-	Delete(string)
-	Iterate(func(string, []byte))
+// KV is a key value store optionally backed by persistant storage
+// in the form of a database directory, where key value pairs are
+// stored as one file per entry.
+type KV struct {
+	rw  sync.RWMutex
+	kv  map[string][]byte
+	dir string
+}
+
+func (db *KV) keyPath(k string) (string, bool) {
+	if db.dir == "" {
+		return "", false
+	}
+	return filepath.Join(db.dir, k), true
 }
 
 // NewMemKV returns an in-memory key value store.
-func NewMemKV() KV {
-	return &memKV{kv: make(map[string][]byte)}
+func NewMemKV() *KV {
+	kv, _ := NewKV("")
+	return kv
 }
 
-type memKV struct {
-	rw sync.RWMutex
-	kv map[string][]byte
-}
-
-func (m *memKV) Add(kv map[string][]byte) {
-	m.rw.Lock()
-	defer m.rw.Unlock()
-	for k, v := range kv {
-		m.kv[k] = v
+// NewKV returns a key value store that stores updates to the given directory.
+func NewKV(dir string) (*KV, error) {
+	kv := make(map[string][]byte)
+	if dir != "" {
+		if err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if entry.IsDir() {
+				if path != dir {
+					return fs.SkipDir
+				}
+				return nil
+			}
+			v, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			k := filepath.Base(path)
+			kv[k] = v
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 	}
+	return &KV{kv: kv, dir: dir}, nil
 }
 
-func (m *memKV) Put(k string, v []byte) bool {
-	m.rw.Lock()
-	defer m.rw.Unlock()
-	created := m.kv[k] == nil
-	m.kv[k] = v
-	return created
+// Add performs a bulk addition to the database. If there is
+// an underlying IO error, a partial update may be made.
+func (db *KV) Add(kv map[string][]byte) error {
+	db.rw.Lock()
+	defer db.rw.Unlock()
+	for k, v := range kv {
+		if p, ok := db.keyPath(k); ok {
+			if err := os.WriteFile(p, v, os.ModePerm); err != nil {
+				return err
+			}
+		}
+		db.kv[k] = v
+	}
+	return nil
 }
 
-func (m *memKV) Get(k string) []byte {
+func (db *KV) Put(k string, v []byte) (bool, error) {
+	db.rw.Lock()
+	defer db.rw.Unlock()
+	_, present := db.kv[k]
+	if p, ok := db.keyPath(k); ok {
+		if err := os.WriteFile(p, v, os.ModePerm); err != nil {
+			return false, err
+		}
+	}
+	db.kv[k] = v
+	return !present, nil
+}
+
+func (m *KV) Get(k string) []byte {
 	m.rw.RLock()
 	defer m.rw.RUnlock()
 	return m.kv[k]
 }
 
-func (m *memKV) Delete(k string) {
-	m.rw.Lock()
-	defer m.rw.Unlock()
-	delete(m.kv, k)
+// Delete removes an entry from the store and deletes the backing
+// file.
+func (db *KV) Delete(k string) error {
+	db.rw.Lock()
+	defer db.rw.Unlock()
+	if _, ok := db.kv[k]; ok {
+		if p, ok := db.keyPath(k); ok {
+			if err := os.Remove(p); err != nil {
+				return err
+			}
+		}
+		delete(db.kv, k)
+	}
+	return nil
 }
 
-func (m *memKV) Iterate(visit func(k string, v []byte)) {
+// Iterate iterates over all key value pairs, calling the supplied
+// callback. It is not safe to refert to the value slice outside
+// of the callback, unless it is copied.
+func (m *KV) Iterate(visit func(k string, v []byte)) {
 	m.rw.RLock()
 	defer m.rw.RUnlock()
 	for k, v := range m.kv {
