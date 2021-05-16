@@ -1,0 +1,19 @@
+syntax = "proto3";
+package links;
+
+option go_package = "github.com/jdtw/links/proto/links";
+
+message Link {
+  string uri = 1;
+}
+
+message LinkEntry {
+  Link link = 1;
+  // To make processing the redirect faster, store the 
+  // number of required path segments for replacement.
+  int32 required_paths = 2;
+}
+
+message Links {
+  map<string, Link> links = 1;
+}
