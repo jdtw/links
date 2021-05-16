@@ -1,6 +1,7 @@
 package links
 
 import (
+	"encoding/hex"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -20,7 +21,7 @@ func (db *KV) keyPath(k string) (string, bool) {
 	if db.dir == "" {
 		return "", false
 	}
-	return filepath.Join(db.dir, k), true
+	return filepath.Join(db.dir, hex.EncodeToString([]byte(k))), true
 }
 
 // NewMemKV returns an in-memory key value store.
@@ -47,8 +48,11 @@ func NewKV(dir string) (*KV, error) {
 			if err != nil {
 				return err
 			}
-			k := filepath.Base(path)
-			kv[k] = v
+			k, err := hex.DecodeString(filepath.Base(path))
+			if err != nil {
+				return nil
+			}
+			kv[string(k)] = v
 			return nil
 		}); err != nil {
 			return nil, err
