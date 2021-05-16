@@ -9,15 +9,17 @@ import (
 	"sort"
 
 	"github.com/jdtw/links/pkg/client"
+	"github.com/jdtw/links/pkg/links"
 )
 
 var (
-	priv = flag.String("priv", "", "Path to private key; can also be specified via the LINKS_PRIVATE_KEY environment variable.")
-	addr = flag.String("addr", "", "Appliction URI; can also be specified via the LINKS_ADDR environment variable")
-	add  = flag.String("add", "", "Add a redirect")
-	link = flag.String("link", "", "The redirect")
-	get  = flag.String("get", "", "Get a redirect")
-	rm   = flag.String("rm", "", "Remove a redirect")
+	priv  = flag.String("priv", "", "Path to private key; can also be specified via the LINKS_PRIVATE_KEY environment variable.")
+	addr  = flag.String("addr", "", "Appliction URI; can also be specified via the LINKS_ADDR environment variable")
+	index = flag.String("index", "", "Set the root redirect")
+	add   = flag.String("add", "", "Add a redirect")
+	link  = flag.String("link", "", "The redirect")
+	get   = flag.String("get", "", "Get a redirect")
+	rm    = flag.String("rm", "", "Remove a redirect")
 )
 
 func main() {
@@ -51,6 +53,10 @@ func main() {
 
 	c := client.New(*addr, pkcs8)
 	switch {
+	case *index != "":
+		if err := c.Put(links.Index, *index); err != nil {
+			log.Fatal(err)
+		}
 	case *add != "":
 		if *link == "" {
 			log.Fatal("missing 'link' flag")

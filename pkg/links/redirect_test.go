@@ -18,6 +18,13 @@ func TestRedirect(t *testing.T) {
 		wantLoc  string
 	}{
 		{
+			key:      Index,
+			value:    "https://example.com",
+			get:      "/",
+			wantCode: http.StatusFound,
+			wantLoc:  "https://example.com",
+		},
+		{
 			key:      "foo",
 			value:    "https://example.com",
 			get:      "/foo",

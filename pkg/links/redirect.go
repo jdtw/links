@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+// Index is used for special handling for the root path; it is stored
+// in the database as the "index" key.
+const Index = ".index"
+
 func (s *server) redirect() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// The first path segment is the key into our DB.
@@ -15,6 +19,9 @@ func (s *server) redirect() http.HandlerFunc {
 		path := r.URL.Path[1:]
 		split := strings.Split(path, "/")
 		key, paths := split[0], split[1:]
+		if key == "" {
+			key = Index
+		}
 
 		// Look up the key, and unmarshal the LinkEntry from the DB
 		le, err := s.getLinkEntry(key)
