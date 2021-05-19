@@ -23,6 +23,10 @@ var (
 func main() {
 	flag.Parse()
 
+	if *keyset == "" {
+		*keyset = os.Getenv("LINKS_KEYSET")
+	}
+
 	switch {
 	case *subject == "":
 		log.Fatal("missing 'subject' flag")

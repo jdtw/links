@@ -23,6 +23,10 @@ func main() {
 	flag.Parse()
 	log.SetPrefix("links: ")
 
+	if *keyset == "" {
+		*keyset = os.Getenv("LINKS_KEYSET")
+	}
+
 	var ks jwk.Set
 	if *keyset != "" {
 		bs, err := ioutil.ReadFile(*keyset)
