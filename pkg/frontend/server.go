@@ -4,23 +4,35 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"sort"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/jdtw/links/pkg/client"
 )
 
-const form = `{{if .Success}}
-<h1>Link added!</h1>
-{{else}}
+const html = `
 <h1>Add Link</h1>
 <form method="POST">
-  <label>Link:</label><br />
-  <input type="text" name="link"><br />
-  <label>URI:</label><br />
-  <input type="text" name="uri"><br />
+  <table>
+	<tr>
+    <td><label>Link:</label></td>
+    <td><input type="text" name="link"></td>
+	</tr>
+	<tr>
+    <td><label>URI:</label></td>
+    <td><input type="text" name="uri"></td>
+	</tr>
+	</table>
   <input type="submit">
 </form>
-{{end}}
+<h1>Links</h1>
+<table>
+  <tr><th>Link</th><th>URI</th></tr>
+  {{range .}}
+  <tr><td>{{.Link}}</td><td><a href="{{.URI}}">{{.URI}}</a></td></tr>
+  {{end}}
+</table>
 `
 
 // NewHandler creates a new frontent handler with the given client.
@@ -40,22 +52,43 @@ func (s *server) routes() {
 }
 
 func (s *server) addLink() http.HandlerFunc {
-	tmpl := template.Must(template.New("link").Parse(form))
+	tmpl := template.Must(template.New("link").Parse(html))
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			tmpl.Execute(w, nil)
-			return
+		if r.Method == http.MethodPost {
+			link := r.FormValue("link")
+			uri := r.FormValue("uri")
+			if link == "" || uri == "" {
+				http.Error(w, "missing link or URI", http.StatusBadRequest)
+				return
+			}
+			if err := s.cli.Put(link, uri); err != nil {
+				log.Printf("Put link failed: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
-
-		link := r.FormValue("link")
-		uri := r.FormValue("uri")
-
-		if err := s.cli.Put(link, uri); err != nil {
-			log.Printf("internal error: %v", err)
+		m, err := s.cli.List()
+		if err != nil {
+			log.Printf("List links failed: %v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		tmpl.Execute(w, struct{ Success bool }{true})
+		tmpl.Execute(w, sortLinks(m))
 	}
+}
+
+type link struct {
+	Link string
+	URI  string
+}
+
+func sortLinks(m map[string]string) []*link {
+	ls := make([]*link, 0, len(m))
+	for k, v := range m {
+		ls = append(ls, &link{k, v})
+	}
+	sort.SliceStable(ls, func(i, j int) bool {
+		return strings.Compare(ls[i].Link, ls[j].Link) < 0
+	})
+	return ls
 }
