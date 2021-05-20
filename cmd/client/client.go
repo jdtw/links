@@ -15,14 +15,14 @@ import (
 )
 
 var (
-	priv         = flag.String("priv", "", "Path to private key; can also be specified via the LINKS_PRIVATE_KEY environment variable.")
-	addr         = flag.String("addr", "", "Appliction URI; can also be specified via the LINKS_ADDR environment variable")
-	index        = flag.String("index", "", "Set the root redirect")
-	add          = flag.String("add", "", "Add a redirect")
-	link         = flag.String("link", "", "The redirect")
-	get          = flag.String("get", "", "Get a redirect")
-	rm           = flag.String("rm", "", "Remove a redirect")
-	frontendPort = flag.Int("frontend_port", -1, "If not -1, starts starts a frontent HTTP server on the given port.")
+	priv   = flag.String("priv", "", "Path to private key; can also be specified via the LINKS_PRIVATE_KEY environment variable.")
+	addr   = flag.String("addr", "", "Appliction URI; can also be specified via the LINKS_ADDR environment variable")
+	index  = flag.String("index", "", "Set the root redirect")
+	add    = flag.String("add", "", "Add a redirect")
+	link   = flag.String("link", "", "The redirect")
+	get    = flag.String("get", "", "Get a redirect")
+	rm     = flag.String("rm", "", "Remove a redirect")
+	server = flag.Int("server", -1, "If not -1, starts starts a frontent HTTP server on the given port.")
 )
 
 func main() {
@@ -53,8 +53,8 @@ func main() {
 
 	c := client.New(*addr, pkcs8)
 	switch {
-	case *frontendPort != -1:
-		addr := fmt.Sprint(":", *frontendPort)
+	case *server != -1:
+		addr := fmt.Sprint(":", *server)
 		log.Printf("listening on %q", addr)
 		log.Fatal(http.ListenAndServe(addr, frontend.NewHandler(c)))
 	case *index != "":
