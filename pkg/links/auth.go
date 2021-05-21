@@ -14,10 +14,14 @@ func unauthorized(w http.ResponseWriter, err error) {
 	http.Error(w, err.Error(), http.StatusUnauthorized)
 }
 
-func (s *server) authenticated(f http.HandlerFunc) http.HandlerFunc {
+type AuthHandler func(http.ResponseWriter, *http.Request, string)
+
+func (s *server) authenticated(f AuthHandler) http.HandlerFunc {
 	// TODO(jdtw): We should fail closed.
 	if s.ks == nil {
-		return f
+		return func(w http.ResponseWriter, r *http.Request) {
+			f(w, r, "")
+		}
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, err := extractToken(r)
@@ -25,11 +29,12 @@ func (s *server) authenticated(f http.HandlerFunc) http.HandlerFunc {
 			unauthorized(w, err)
 			return
 		}
-		if _, err := auth.VerifyJWT(s.ks, token, auth.ServerAudience(r)); err != nil {
+		sub, err := auth.VerifyJWT(s.ks, token, auth.ServerAudience(r))
+		if err != nil {
 			unauthorized(w, err)
 			return
 		}
-		f(w, r)
+		f(w, r, sub)
 	}
 }
 

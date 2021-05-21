@@ -40,6 +40,7 @@ func NewKV(dir string) (*KV, error) {
 			}
 			if entry.IsDir() {
 				if path != dir {
+					// All subdirectories are ignored.
 					return fs.SkipDir
 				}
 				return nil

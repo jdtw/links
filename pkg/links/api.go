@@ -2,6 +2,7 @@ package links
 
 import (
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -9,8 +10,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func (s *server) list() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *server) list() AuthHandler {
+	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		lpb := &pb.Links{
 			Links: make(map[string]*pb.Link),
 		}
@@ -27,8 +28,8 @@ func (s *server) list() http.HandlerFunc {
 	}
 }
 
-func (s *server) add() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *server) add() AuthHandler {
+	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			internalError(w, err)
@@ -47,8 +48,8 @@ func (s *server) add() http.HandlerFunc {
 	}
 }
 
-func (s *server) get() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *server) get() AuthHandler {
+	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
 		lepb, err := s.getLinkEntry(l)
 		if err != nil {
@@ -69,8 +70,8 @@ func (s *server) get() http.HandlerFunc {
 	}
 }
 
-func (s *server) put() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *server) put() AuthHandler {
+	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -89,16 +90,19 @@ func (s *server) put() http.HandlerFunc {
 		}
 		if created {
 			w.WriteHeader(http.StatusCreated)
+			log.Printf("%s added %q -> %q", sub, l, lpb.Uri)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
+		log.Printf("%s updated %q -> %q", sub, l, lpb.Uri)
 	}
 }
 
-func (s *server) delete() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (s *server) delete() AuthHandler {
+	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
 		s.deleteLinkEntry(l)
 		w.WriteHeader(http.StatusNoContent)
+		log.Printf("%s deleted %q", sub, l)
 	}
 }

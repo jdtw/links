@@ -69,6 +69,7 @@ func NewKey(rand io.Reader, sub string) (pub jwk.Key, priv []byte, err error) {
 
 type TokenOption func(jwt.Token)
 
+// WithExpiry adds an expiration time to the JWT.
 func WithExpiry(now time.Time, exp time.Duration) TokenOption {
 	return func(t jwt.Token) {
 		t.Set(jwt.IssuedAtKey, now)
@@ -77,6 +78,8 @@ func WithExpiry(now time.Time, exp time.Duration) TokenOption {
 	}
 }
 
+// SignJWT signs a JWT for the given audience with the pkcs8 private key.
+// Only Ed25519 private keys are supported.
 func SignJWT(pkcs8 []byte, aud string, options ...TokenOption) ([]byte, error) {
 	key, err := x509.ParsePKCS8PrivateKey(pkcs8)
 	if err != nil {
@@ -107,6 +110,8 @@ func SignJWT(pkcs8 []byte, aud string, options ...TokenOption) ([]byte, error) {
 	return jwt.Sign(t, jwa.EdDSA, priv, jwt.WithHeaders(hdrs))
 }
 
+// VerifyJWT verifies the token against the given keyset and audience.
+// Returns the subject from the verification key.
 func VerifyJWT(ks jwk.Set, s []byte, aud string) (string, error) {
 	key, err := findKey(s, ks)
 	if err != nil {
