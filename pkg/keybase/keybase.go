@@ -45,13 +45,13 @@ func ChatBot(keybaseLoc string, links *client.Client) error {
 		if len(cmd) < 2 {
 			continue
 		}
-		if cmd[1] != "!links" {
+		if strings.ToLower(cmd[0]) != "!links" {
 			continue
 		}
 
 		log.Printf("%s: %v", m.Message.Sender.Username, cmd)
 		var reply string
-		action := strings.ToLower(cmd[2])
+		action := strings.ToLower(cmd[1])
 		switch action {
 		case "add":
 			reply, err = lc.add(cmd[2:]...)
