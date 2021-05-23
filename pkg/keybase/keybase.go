@@ -106,8 +106,8 @@ func (lc *linksClient) list(args ...string) (string, error) {
 		for k, v := range m {
 			ls = append(ls, fmt.Sprintf("%s %s", k, v))
 		}
+		sort.Strings(ls)
 	}
-	sort.Strings(ls)
 	return strings.Join(ls, "\n"), nil
 }
 
