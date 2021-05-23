@@ -1,6 +1,7 @@
 package keybase
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"sort"
@@ -41,23 +42,25 @@ func ChatBot(keybaseLoc string, links *client.Client) error {
 
 		cmd := strings.Fields(m.Message.Content.Text.Body)
 		log.Print(cmd)
-		if len(cmd) == 0 {
-			// TODO(jdtw): Send usage...
-			kbc.SendMessage(m.Message.Channel, "Bad request!")
+		if len(cmd) < 2 {
+			continue
+		}
+		if cmd[1] != "!links" {
 			continue
 		}
 
+		log.Printf("%s: %v", m.Message.Sender.Username, cmd)
 		var reply string
-		action := strings.ToLower(cmd[0])
+		action := strings.ToLower(cmd[2])
 		switch action {
 		case "add":
-			reply, err = lc.add(cmd[1:]...)
-		case "list":
-			reply, err = lc.list(cmd[1:]...)
-		case "rm":
-			reply, err = lc.rm(cmd[1:]...)
+			reply, err = lc.add(cmd[2:]...)
+		case "list", "ls":
+			reply, err = lc.list(cmd[2:]...)
+		case "delete", "rm":
+			reply, err = lc.rm(cmd[2:]...)
 		default:
-			reply = fmt.Sprintf("Unknown command: %q", action)
+			reply = fmt.Sprintf("Unknown links command: %q", action)
 		}
 		if err != nil {
 			if _, err := kbc.SendMessage(m.Message.Channel, "%s failed: %v", action, err); err != nil {
@@ -84,13 +87,25 @@ func (lc *linksClient) add(args ...string) (string, error) {
 }
 
 func (lc *linksClient) list(args ...string) (string, error) {
-	m, err := lc.c.List()
-	if err != nil {
-		return "", err
-	}
-	ls := make([]string, 0, len(m))
-	for k, v := range m {
+	ls := make([]string, 0, len(args))
+	for _, k := range args {
+		v, err := lc.c.Get(k)
+		switch {
+		case errors.Is(err, client.ErrNotFound):
+			v = "(not found)"
+		case err != nil:
+			return "", err
+		}
 		ls = append(ls, fmt.Sprintf("%s %s", k, v))
+	}
+	if len(ls) == 0 {
+		m, err := lc.c.List()
+		if err != nil {
+			return "", err
+		}
+		for k, v := range m {
+			ls = append(ls, fmt.Sprintf("%s %s", k, v))
+		}
 	}
 	sort.Strings(ls)
 	return strings.Join(ls, "\n"), nil

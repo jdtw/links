@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -52,6 +53,9 @@ func TestClient(t *testing.T) {
 	})
 
 	c := New("http://"+addr, priv)
+	if _, err := c.Get("foo"); !errors.Is(err, ErrNotFound) {
+		t.Errorf("Get(foo) returned %v; want err %v", err, ErrNotFound)
+	}
 	if err := c.Put("foo", "bar"); err != nil {
 		t.Fatalf("client.Put(foo, bar) failed: %v", err)
 	}

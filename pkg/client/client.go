@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,6 +16,9 @@ import (
 )
 
 const linksAPI = "/api/links"
+
+// ErrNotFound is a sential error for HTTP status code 404.
+var ErrNotFound = errors.New("not found")
 
 // Client is a client for the links REST API.
 type Client struct {
@@ -155,6 +159,8 @@ func ok(resp *http.Response) error {
 	switch resp.StatusCode {
 	case http.StatusOK, http.StatusNoContent, http.StatusCreated:
 		return nil
+	case http.StatusNotFound:
+		return fmt.Errorf("%w: %s %s", ErrNotFound, resp.Request.Method, resp.Request.RequestURI)
 	default:
 		return fmt.Errorf("%s %s failed: %s", resp.Request.Method, resp.Request.RequestURI, resp.Status)
 	}

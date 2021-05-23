@@ -36,6 +36,14 @@ func TestCRUD(t *testing.T) {
 		}
 	}()
 
+	// 1.5 ) Return not found for a missing link
+	func() {
+		res := serveHTTP("GET", "/api/links/foo", nil)
+		if sc := res.StatusCode; sc != http.StatusNotFound {
+			t.Errorf("GET /api/links/foo returned %d; want %d", sc, http.StatusNotFound)
+		}
+	}()
+
 	// 2 ) Add an item.
 	var (
 		path = "/api/links/foo"
