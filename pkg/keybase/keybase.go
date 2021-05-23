@@ -60,7 +60,7 @@ func ChatBot(keybaseLoc string, links *client.Client) error {
 			reply = fmt.Sprintf("Unknown command: %q", action)
 		}
 		if err != nil {
-			if _, err := kbc.SendMessage(m.Message.Channel, "%s failed: %v", action); err != nil {
+			if _, err := kbc.SendMessage(m.Message.Channel, "%s failed: %v", action, err); err != nil {
 				log.Printf("kbc.SendMessage failed: %v", err)
 			}
 			continue
