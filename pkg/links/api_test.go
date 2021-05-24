@@ -127,33 +127,6 @@ func TestCRUD(t *testing.T) {
 			t.Errorf("GET %s returned %d, want 404", path, sc)
 		}
 	}()
-
-	// 9 ) Batch add/read
-	links := &pb.Links{
-		Links: map[string]*pb.Link{
-			"foo": {Uri: "https://example.com"},
-			"bar": {Uri: "https://example.com/baz"},
-		},
-	}
-	func() {
-		res := serveHTTP("POST", "/api/links", marshal(t, links))
-		if sc := res.StatusCode; sc != http.StatusNoContent {
-			t.Errorf("POST /api/links returned %d, want 204", sc)
-			return
-		}
-		for k, want := range links.Links {
-			res = serveHTTP("GET", "/api/links/"+k, nil)
-			if sc := res.StatusCode; sc != http.StatusOK {
-				t.Errorf("GET %s returned %d, want 200", path, sc)
-				return
-			}
-			got := new(pb.Link)
-			unmarshal(t, res.Body, got)
-			if got.Uri != want.Uri {
-				t.Errorf("GET /api/links/%s returned %v, want %q", k, got, want)
-			}
-		}
-	}()
 }
 
 func marshalLink(t *testing.T, uri string) io.Reader {

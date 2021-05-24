@@ -28,26 +28,6 @@ func (s *server) list() AuthHandler {
 	}
 }
 
-func (s *server) add() AuthHandler {
-	return func(w http.ResponseWriter, r *http.Request, sub string) {
-		data, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			internalError(w, err)
-			return
-		}
-		ls := new(pb.Links)
-		if err := proto.Unmarshal(data, ls); err != nil {
-			internalError(w, err)
-			return
-		}
-		if err := s.addLinks(ls); err != nil {
-			internalError(w, err)
-			return
-		}
-		w.WriteHeader(http.StatusNoContent)
-	}
-}
-
 func (s *server) get() AuthHandler {
 	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]

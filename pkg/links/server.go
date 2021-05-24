@@ -19,8 +19,6 @@ func (s *server) routes() {
 	a := s.PathPrefix("/api").Subrouter()
 	// Get all links as a Links proto.
 	a.HandleFunc("/links", s.authenticated(s.list())).Methods("GET")
-	// Batch upload a Links proto.
-	a.HandleFunc("/links", s.authenticated(s.add())).Methods("POST")
 	// Get a speficic link.
 	a.HandleFunc("/links/{link}", s.authenticated(s.get())).Methods("GET")
 	// Create or update a link.

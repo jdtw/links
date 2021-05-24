@@ -65,22 +65,6 @@ func (s *server) deleteLinkEntry(k string) {
 	s.kv.Delete(LinkKey(k))
 }
 
-func (s *server) addLinks(ls *pb.Links) error {
-	m := make(map[string][]byte, len(ls.Links))
-	for k, l := range ls.Links {
-		b, err := proto.Marshal(&pb.LinkEntry{
-			Link:          l,
-			RequiredPaths: requiredPaths(l),
-		})
-		if err != nil {
-			return err
-		}
-		m[LinkKey(k)] = b
-	}
-	s.kv.Add(m)
-	return nil
-}
-
 func (s *server) visitLinkEntries(visit func(string, *pb.LinkEntry)) {
 	s.kv.Iterate(func(k string, v []byte) {
 		if !strings.HasPrefix(k, linkKeyPrefix) {
