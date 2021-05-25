@@ -6,11 +6,33 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	pb "github.com/jdtw/links/proto/links"
 	"google.golang.org/protobuf/proto"
 )
+
+func TestPutRejectsInvalidRequests(t *testing.T) {
+	tests := []io.Reader{
+		nil,
+		strings.NewReader("not-a-proto"),
+		marshalLink(t, ""),
+		marshalLink(t, "http://embedded\x00null"),
+		marshalLink(t, "no-scheme"),
+	}
+	kv := NewMemKV()
+	srv := NewHandler(kv, nil)
+
+	for _, tc := range tests {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("PUT", "/api/links/foo", tc)
+		srv.ServeHTTP(rr, req)
+		if sc := rr.Result().StatusCode; sc != http.StatusBadRequest {
+			t.Errorf("PUT %q returned %d, want 400", tc, sc)
+		}
+	}
+}
 
 func TestCRUD(t *testing.T) {
 	kv := NewMemKV()

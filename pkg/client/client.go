@@ -120,7 +120,7 @@ func (c *Client) Put(link string, uri string) error {
 	}
 	resp, err := c.do("PUT", api(link), body)
 	if err != nil {
-		return nil
+		return err
 	}
 	resp.Body.Close()
 	return nil
@@ -162,6 +162,6 @@ func ok(resp *http.Response) error {
 	case http.StatusNotFound:
 		return fmt.Errorf("%w: %s %s", ErrNotFound, resp.Request.Method, resp.Request.RequestURI)
 	default:
-		return fmt.Errorf("%s %s failed: %s", resp.Request.Method, resp.Request.RequestURI, resp.Status)
+		return fmt.Errorf("%s %s failed: %s", resp.Request.Method, resp.Request.URL, resp.Status)
 	}
 }

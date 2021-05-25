@@ -62,22 +62,6 @@ func NewKV(dir string) (*KV, error) {
 	return &KV{kv: kv, dir: dir}, nil
 }
 
-// Add performs a bulk addition to the database. If there is
-// an underlying IO error, a partial update may be made.
-func (db *KV) Add(kv map[string][]byte) error {
-	db.rw.Lock()
-	defer db.rw.Unlock()
-	for k, v := range kv {
-		if p, ok := db.keyPath(k); ok {
-			if err := os.WriteFile(p, v, os.ModePerm); err != nil {
-				return err
-			}
-		}
-		db.kv[k] = v
-	}
-	return nil
-}
-
 func (db *KV) Put(k string, v []byte) (bool, error) {
 	db.rw.Lock()
 	defer db.rw.Unlock()

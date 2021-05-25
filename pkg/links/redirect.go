@@ -39,7 +39,7 @@ func (s *server) redirect() http.HandlerFunc {
 		// we end up with "example.com/foo/bar/baz"
 		uri, paths, err := subst(le, paths)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			badRequest(w, err.Error())
 			return
 		}
 

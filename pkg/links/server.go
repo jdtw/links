@@ -1,6 +1,7 @@
 package links
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -40,4 +41,8 @@ func NewHandler(kv *KV, ks jwk.Set) http.Handler {
 func internalError(w http.ResponseWriter, err error) {
 	log.Printf("internal error: %v", err)
 	http.Error(w, err.Error(), http.StatusInternalServerError)
+}
+
+func badRequest(w http.ResponseWriter, format string, a ...interface{}) {
+	http.Error(w, fmt.Sprintf(format, a...), http.StatusBadRequest)
 }

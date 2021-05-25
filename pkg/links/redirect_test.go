@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	pb "github.com/jdtw/links/proto/links"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -121,5 +122,15 @@ func TestRedirect(t *testing.T) {
 		if loc := res.Header["Location"]; len(loc) != 1 || loc[0] != tc.wantLoc {
 			t.Errorf("got location %v, want %q", loc, tc.wantLoc)
 		}
+	}
+}
+
+func linkEntry(uri string) *pb.LinkEntry {
+	l := &pb.Link{
+		Uri: uri,
+	}
+	return &pb.LinkEntry{
+		Link:          l,
+		RequiredPaths: requiredPaths(l),
 	}
 }

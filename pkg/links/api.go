@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/mux"
 	pb "github.com/jdtw/links/proto/links"
@@ -60,7 +61,23 @@ func (s *server) put() AuthHandler {
 		}
 		lpb := new(pb.Link)
 		if err := proto.Unmarshal(data, lpb); err != nil {
-			internalError(w, err)
+			badRequest(w, "failed to unmarshal body: %v", err)
+			return
+		}
+		if lpb.Uri == "" {
+			badRequest(w, "missing URI")
+			return
+		}
+		// Create a dummy URI with all template parameters replaced
+		// with something innocuous so that we can try to parse it.
+		dummy := replacement.ReplaceAllString(lpb.Uri, "links")
+		url, err := url.Parse(dummy)
+		if err != nil {
+			badRequest(w, "URI %q failed to parse: %v", lpb.Uri, err)
+			return
+		}
+		if url.Scheme == "" {
+			badRequest(w, "URI %q has no scheme", lpb.Uri)
 			return
 		}
 		created, err := s.putLinkEntry(l, lpb)

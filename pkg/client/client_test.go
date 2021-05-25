@@ -56,16 +56,16 @@ func TestClient(t *testing.T) {
 	if _, err := c.Get("foo"); !errors.Is(err, ErrNotFound) {
 		t.Errorf("Get(foo) returned %v; want err %v", err, ErrNotFound)
 	}
-	if err := c.Put("foo", "bar"); err != nil {
-		t.Fatalf("client.Put(foo, bar) failed: %v", err)
+	if err := c.Put("foo", "http://bar"); err != nil {
+		t.Fatalf("client.Put(foo, http://bar) failed: %v", err)
 	}
 	{
 		got, err := c.Get("foo")
 		if err != nil {
 			t.Fatalf("client.Get(foo) failed: %v", err)
 		}
-		if got != "bar" {
-			t.Fatalf("client.Get(foo) = %v, want bar", got)
+		if got != "http://bar" {
+			t.Fatalf("client.Get(foo) = %v, want http://bar", got)
 		}
 	}
 	{
@@ -76,7 +76,7 @@ func TestClient(t *testing.T) {
 		if len(got) != 1 {
 			t.Fatalf("client.List len = %d, want 1", len(got))
 		}
-		if got["foo"] != "bar" {
+		if got["foo"] != "http://bar" {
 			t.Fatalf("client.List[foo] = %v, want bar", got["foo"])
 		}
 	}

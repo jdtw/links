@@ -2,7 +2,6 @@ package links
 
 import (
 	"log"
-	"net/url"
 	"strings"
 
 	pb "github.com/jdtw/links/proto/links"
@@ -13,29 +12,6 @@ const linkKeyPrefix = "lnk:"
 
 // LinkKey returns a DB key prefixed with "lnk:"
 func LinkKey(k string) string { return linkKeyPrefix + k }
-
-// LinkEntry creates a DB entry value from a URI. Returns
-// an error if the URI cannot be parsed.
-func LinkEntry(uri string) ([]byte, error) {
-	// Create a dummy API with all template parameters replaced
-	// with something innocuous so that we can try to parse it.
-	dummy := replacement.ReplaceAllString(uri, "links")
-	if _, err := url.Parse(dummy); err != nil {
-		return nil, err
-	}
-	le := linkEntry(uri)
-	return proto.Marshal(le)
-}
-
-func linkEntry(uri string) *pb.LinkEntry {
-	l := &pb.Link{
-		Uri: uri,
-	}
-	return &pb.LinkEntry{
-		Link:          l,
-		RequiredPaths: requiredPaths(l),
-	}
-}
 
 func (s *server) getLinkEntry(k string) (*pb.LinkEntry, error) {
 	data := s.kv.Get(LinkKey(k))
