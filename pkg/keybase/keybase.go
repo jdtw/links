@@ -83,7 +83,7 @@ func (lc *linksClient) add(args ...string) (string, error) {
 	if err := lc.c.Put(args[0], args[1]); err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("Added %s!", args[0]), nil
+	return fmt.Sprintf("Added %s/%s!", lc.c.Host, args[0]), nil
 }
 
 func (lc *linksClient) list(args ...string) (string, error) {
