@@ -1,16 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/jdtw/links/pkg/links"
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/jdtw/links/pkg/token"
 )
 
 var (
@@ -26,17 +24,17 @@ func main() {
 	if *keyset == "" {
 		*keyset = os.Getenv("LINKS_KEYSET")
 	}
+	if *keyset == "" {
+		log.Fatal("missing 'keyset' flag")
+	}
 
-	var ks jwk.Set
-	if *keyset != "" {
-		bs, err := ioutil.ReadFile(*keyset)
-		if err != nil {
-			log.Fatalf("ioutil.ReadFile(%s) failed: %v", *keyset, err)
-		}
-		ks = jwk.NewSet()
-		if err := json.Unmarshal(bs, ks); err != nil {
-			log.Fatalf("json.Unmarshal(%s) failed: %v", *keyset, err)
-		}
+	ksContents, err := os.ReadFile(*keyset)
+	if err != nil {
+		log.Fatalf("os.ReadFile(%s) failed: %v", *keyset, err)
+	}
+	ks, err := token.UnmarshalVerificationKeyset(ksContents)
+	if err != nil {
+		log.Fatalf("token.UnmarshalVerificationKeyset(%s) failed: %v", *keyset, err)
 	}
 
 	if *database != "" {

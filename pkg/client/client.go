@@ -8,9 +8,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
-	"time"
 
-	"github.com/jdtw/links/pkg/auth"
+	"github.com/jdtw/links/pkg/token"
 	pb "github.com/jdtw/links/proto/links"
 	"google.golang.org/protobuf/proto"
 )
@@ -23,19 +22,28 @@ var ErrNotFound = errors.New("not found")
 // Client is a client for the links REST API.
 type Client struct {
 	Host string
-	// If PKCS8 is not nil, the client sends unauthenticated requests.
-	PKCS8  []byte
+	// If the key is not nil, the client sends unauthenticated requests.
+	Signer *token.SigningKey
 	Client *http.Client
 }
 
 // New creates a client with a default HTTP client. If pkcs8 is nil,
 // client requests will be unauthenticated.
-func New(host string, pkcs8 []byte) *Client {
+func New(host string, signer *token.SigningKey) *Client {
 	return &Client{
 		Host:   host,
-		PKCS8:  pkcs8,
+		Signer: signer,
 		Client: &http.Client{},
 	}
+}
+
+func AddBearerToken(signer *token.SigningKey, req *http.Request) error {
+	token, err := signer.Sign(token.WithRequestResource(req))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", "Bearer "+token)
+	return nil
 }
 
 func (c *Client) do(method string, path string, body io.Reader) (*http.Response, error) {
@@ -43,12 +51,10 @@ func (c *Client) do(method string, path string, body io.Reader) (*http.Response,
 	if err != nil {
 		return nil, err
 	}
-	if len(c.PKCS8) > 0 {
-		token, err := auth.SignJWT(c.PKCS8, auth.ClientAudience(req), auth.WithExpiry(time.Now(), 10*time.Second))
-		if err != nil {
+	if c.Signer != nil {
+		if err := AddBearerToken(c.Signer, req); err != nil {
 			return nil, err
 		}
-		req.Header.Add("Authorization", "Bearer "+string(token))
 	}
 	resp, err := c.Client.Do(req)
 	if err != nil {

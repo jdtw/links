@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/jdtw/links/pkg/token"
 )
 
 type server struct {
 	kv *KV
-	ks jwk.Set
+	ks *token.VerificationKeyset
 	*mux.Router
 }
 
@@ -32,7 +32,7 @@ func (s *server) routes() {
 }
 
 // NewHandler sets up routes based on the given key value store.
-func NewHandler(kv *KV, ks jwk.Set) http.Handler {
+func NewHandler(kv *KV, ks *token.VerificationKeyset) http.Handler {
 	srv := &server{kv, ks, mux.NewRouter()}
 	srv.routes()
 	return srv

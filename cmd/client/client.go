@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/pem"
 	"flag"
 	"fmt"
 	"log"
@@ -13,6 +12,7 @@ import (
 	"github.com/jdtw/links/pkg/frontend"
 	"github.com/jdtw/links/pkg/keybase"
 	"github.com/jdtw/links/pkg/links"
+	"github.com/jdtw/links/pkg/token"
 )
 
 var (
@@ -39,21 +39,20 @@ func main() {
 	if *priv == "" {
 		*priv = os.Getenv("LINKS_PRIVATE_KEY")
 	}
-
-	var pkcs8 []byte
-	if *priv != "" {
-		bs, err := os.ReadFile(*priv)
-		if err != nil {
-			log.Fatal(err)
-		}
-		block, _ := pem.Decode(bs)
-		if block.Type != "PRIVATE KEY" {
-			log.Fatalf("unexpected PEM block type: %s", block.Type)
-		}
-		pkcs8 = block.Bytes
+	if *priv == "" {
+		log.Fatal("missing 'priv' flag.")
 	}
 
-	c := client.New(*addr, pkcs8)
+	privContents, err := os.ReadFile(*priv)
+	if err != nil {
+		log.Fatalf("ReadFile(%s) failed: %v", *priv, err)
+	}
+	signer, err := token.UnmarshalSigningKey(privContents)
+	if err != nil {
+		log.Fatalf("UnmarshalSigningKey failed: %v", err)
+	}
+
+	c := client.New(*addr, signer)
 	switch {
 	case *server != -1:
 		addr := fmt.Sprint(":", *server)
