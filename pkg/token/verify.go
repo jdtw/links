@@ -2,7 +2,6 @@ package token
 
 import (
 	"crypto/ed25519"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
@@ -10,6 +9,10 @@ import (
 	pb "github.com/jdtw/links/proto/token"
 	"google.golang.org/protobuf/proto"
 )
+
+type VerificationKey struct {
+	key *pb.VerificationKey
+}
 
 type VerificationKeyset struct {
 	keys *pb.VerificationKeyset
@@ -29,21 +32,18 @@ func UnmarshalVerificationKeyset(serialized []byte) (*VerificationKeyset, error)
 	return &VerificationKeyset{keyset}, nil
 }
 
-func (v *VerificationKeyset) AddKey(id string, subject string, publicKey []byte) error {
-	if id == "" {
+func (v *VerificationKeyset) Add(key *VerificationKey) error {
+	keypb := key.key
+	if keypb.Id == "" {
 		return errors.New("missing ID")
 	}
-	if subject == "" {
+	if keypb.Subject == "" {
 		return errors.New("missing subject")
 	}
-	if got, want := len(publicKey), ed25519.PublicKeySize; got != want {
+	if got, want := len(keypb.PublicKey), ed25519.PublicKeySize; got != want {
 		return fmt.Errorf("invalid key size; got %d, want %d", got, want)
 	}
-	v.keys.Keys[id] = &pb.VerificationKey{
-		Id:        id,
-		Subject:   subject,
-		PublicKey: publicKey,
-	}
+	v.keys.Keys[keypb.Id] = key.key
 	return nil
 }
 
@@ -77,14 +77,10 @@ func CheckResource(resource string) TokenCheck {
 	}
 }
 
-func (v *VerificationKeyset) Verify(token string, checks ...TokenCheck) (string, error) {
+func (v *VerificationKeyset) Verify(token []byte, checks ...TokenCheck) (string, error) {
 	// Unmarshal the signed token.
-	decoded, err := base64.URLEncoding.DecodeString(token)
-	if err != nil {
-		return "", err
-	}
 	signed := &pb.SignedToken{}
-	if err := proto.Unmarshal(decoded, signed); err != nil {
+	if err := proto.Unmarshal(token, signed); err != nil {
 		return "", err
 	}
 

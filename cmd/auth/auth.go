@@ -67,12 +67,11 @@ func main() {
 		}
 	}
 
-	signer, err := token.NewSigningKey()
+	verifier, signer, err := token.GenerateKey(*subject)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	if err := ks.AddKey(signer.ID(), *subject, signer.Public()); err != nil {
+	if err := ks.Add(verifier); err != nil {
 		log.Fatal(err)
 	}
 

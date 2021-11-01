@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/jdtw/links/pkg/links"
-	"github.com/jdtw/links/pkg/token"
+	"github.com/jdtw/links/pkg/tokentest"
 )
 
 func getFreePort(t *testing.T) int {
@@ -29,14 +29,7 @@ func getFreePort(t *testing.T) int {
 }
 
 func TestClient(t *testing.T) {
-	priv, err := token.NewSigningKey()
-	if err != nil {
-		t.Fatalf("token.GenerateSigningKey failed: %v", err)
-	}
-	ks := token.NewVerificationKeyset()
-	if err := ks.AddKey(priv.ID(), "test", priv.Public()); err != nil {
-		t.Fatalf("ks.AddKey faield: %v", err)
-	}
+	ks, signer := tokentest.GenerateKey(t, "test")
 	kv := links.NewMemKV()
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -52,7 +45,7 @@ func TestClient(t *testing.T) {
 		wg.Wait()
 	})
 
-	c := New("http://"+addr, priv)
+	c := New("http://"+addr, signer)
 	if _, err := c.Get("foo"); !errors.Is(err, ErrNotFound) {
 		t.Errorf("Get(foo) returned %v; want err %v", err, ErrNotFound)
 	}

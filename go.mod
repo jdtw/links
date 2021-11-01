@@ -3,7 +3,6 @@ module github.com/jdtw/links
 go 1.17
 
 require (
-	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.8.0
 	github.com/keybase/go-keybase-chat-bot v0.0.0-20200505163032-5cacf52379da
 	google.golang.org/protobuf v1.27.1

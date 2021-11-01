@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"time"
@@ -21,16 +20,23 @@ type SigningKey struct {
 	key *pb.SigningKey
 }
 
-func NewSigningKey() (*SigningKey, error) {
+func GenerateKey(subject string) (*VerificationKey, *SigningKey, error) {
 	pub, priv, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	keyID := sha256.Sum256([]byte(pub))
-	return &SigningKey{&pb.SigningKey{
-		Id:         hex.EncodeToString(keyID[:]),
-		PrivateKey: []byte(priv)},
-	}, nil
+	digest := sha256.Sum256([]byte(pub))
+	keyID := hex.EncodeToString(digest[:])
+	return &VerificationKey{&pb.VerificationKey{
+			Id:        keyID,
+			Subject:   subject,
+			PublicKey: []byte(pub),
+		}},
+		&SigningKey{&pb.SigningKey{
+			Id:         keyID,
+			PrivateKey: []byte(priv)},
+		},
+		nil
 }
 
 func UnmarshalSigningKey(serialized []byte) (*SigningKey, error) {
@@ -39,15 +45,6 @@ func UnmarshalSigningKey(serialized []byte) (*SigningKey, error) {
 		return nil, err
 	}
 	return &SigningKey{key}, nil
-}
-
-func (k *SigningKey) Public() []byte {
-	priv := ed25519.PrivateKey(k.key.PrivateKey)
-	return priv.Public().(ed25519.PublicKey)
-}
-
-func (k *SigningKey) ID() string {
-	return k.key.Id
 }
 
 func (k *SigningKey) Marshal() ([]byte, error) {
@@ -71,18 +68,18 @@ func WithExpiry(now time.Time, exp time.Duration) TokenOption {
 }
 
 // Sign signs a token for the given resource. By default, the expiry time is one minute.
-func (k *SigningKey) Sign(options ...TokenOption) (string, error) {
+func (k *SigningKey) Sign(options ...TokenOption) ([]byte, error) {
 	token := &pb.Token{}
 	WithExpiry(time.Now(), time.Minute)(token)
 	for _, opt := range options {
 		opt(token)
 	}
 	if token.Resource == "" {
-		return "", fmt.Errorf("token missing required resource; use one of the With*Resource options to set it")
+		return nil, fmt.Errorf("token missing required resource; use one of the With*Resource options to set it")
 	}
 	bytes, err := proto.Marshal(token)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	priv := ed25519.PrivateKey(k.key.PrivateKey)
@@ -90,7 +87,7 @@ func (k *SigningKey) Sign(options ...TokenOption) (string, error) {
 	toSign := append([]byte(header), bytes...)
 	sig, err := priv.Sign(rand.Reader, toSign, crypto.Hash(0))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	bytes, err = proto.Marshal(&pb.SignedToken{
 		KeyId:     k.key.Id,
@@ -98,7 +95,7 @@ func (k *SigningKey) Sign(options ...TokenOption) (string, error) {
 		Token:     bytes,
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return base64.URLEncoding.EncodeToString(bytes), nil
+	return bytes, nil
 }

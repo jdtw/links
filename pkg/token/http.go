@@ -1,12 +1,13 @@
 package token
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strings"
 )
 
-// Our custom authorization scheme for the header.
+// The custom authorization scheme for the header.
 const scheme = "ProtoEd25519 "
 
 // AuthorizeRequest signs a token for the given HTTP request and adds it to the Authorization header.
@@ -15,7 +16,8 @@ func (s *SigningKey) AuthorizeRequest(req *http.Request, options ...TokenOption)
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Authorization", scheme+token)
+	encoded := base64.URLEncoding.EncodeToString(token)
+	req.Header.Add("Authorization", scheme+encoded)
 	return nil
 }
 
@@ -28,8 +30,12 @@ func (v *VerificationKeyset) AuthorizeRequest(r *http.Request, checks ...TokenCh
 	if !strings.HasPrefix(authz[0], scheme) {
 		return "", fmt.Errorf("authorization header %q missing %q prefix", authz[0], scheme)
 	}
-	t := strings.TrimPrefix(authz[0], scheme)
-	return v.Verify(t, append(checks, checkRequestResource(r))...)
+	encoded := strings.TrimPrefix(authz[0], scheme)
+	decoded, err := base64.URLEncoding.DecodeString(encoded)
+	if err != nil {
+		return "", err
+	}
+	return v.Verify(decoded, append(checks, checkRequestResource(r))...)
 }
 
 func withRequestResource(r *http.Request) TokenOption {
