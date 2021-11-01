@@ -37,22 +37,13 @@ func New(host string, signer *token.SigningKey) *Client {
 	}
 }
 
-func AddBearerToken(signer *token.SigningKey, req *http.Request) error {
-	token, err := signer.Sign(token.WithRequestResource(req))
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Authorization", "Bearer "+token)
-	return nil
-}
-
 func (c *Client) do(method string, path string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest(method, c.Host+path, body)
 	if err != nil {
 		return nil, err
 	}
 	if c.Signer != nil {
-		if err := AddBearerToken(c.Signer, req); err != nil {
+		if err := c.Signer.AuthorizeRequest(req); err != nil {
 			return nil, err
 		}
 	}
