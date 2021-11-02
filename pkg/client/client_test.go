@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/rand"
 	"errors"
 	"fmt"
 	"net"
@@ -10,9 +9,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jdtw/links/pkg/auth"
 	"github.com/jdtw/links/pkg/links"
-	"github.com/lestrrat-go/jwx/jwk"
+	"github.com/jdtw/links/pkg/tokentest"
 )
 
 func getFreePort(t *testing.T) int {
@@ -31,12 +29,7 @@ func getFreePort(t *testing.T) int {
 }
 
 func TestClient(t *testing.T) {
-	pub, priv, err := auth.NewKey(rand.Reader, "test")
-	if err != nil {
-		t.Fatalf("auth.NewKey failed: %v", err)
-	}
-	ks := jwk.NewSet()
-	ks.Add(pub)
+	ks, signer := tokentest.GenerateKey(t, "test")
 	kv := links.NewMemKV()
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -52,7 +45,7 @@ func TestClient(t *testing.T) {
 		wg.Wait()
 	})
 
-	c := New("http://"+addr, priv)
+	c := New("http://"+addr, signer)
 	if _, err := c.Get("foo"); !errors.Is(err, ErrNotFound) {
 		t.Errorf("Get(foo) returned %v; want err %v", err, ErrNotFound)
 	}

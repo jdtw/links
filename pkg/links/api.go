@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func (s *server) list() AuthHandler {
+func (s *server) list() authHandler {
 	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		lpb := &pb.Links{
 			Links: make(map[string]*pb.Link),
@@ -29,7 +29,7 @@ func (s *server) list() AuthHandler {
 	}
 }
 
-func (s *server) get() AuthHandler {
+func (s *server) get() authHandler {
 	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
 		lepb, err := s.getLinkEntry(l)
@@ -51,7 +51,7 @@ func (s *server) get() AuthHandler {
 	}
 }
 
-func (s *server) put() AuthHandler {
+func (s *server) put() authHandler {
 	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
 		data, err := ioutil.ReadAll(r.Body)
@@ -95,7 +95,7 @@ func (s *server) put() AuthHandler {
 	}
 }
 
-func (s *server) delete() AuthHandler {
+func (s *server) delete() authHandler {
 	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
 		s.deleteLinkEntry(l)
