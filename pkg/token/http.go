@@ -12,7 +12,7 @@ const scheme = "ProtoEd25519 "
 
 // AuthorizeRequest signs a token for the given HTTP request and adds it to the Authorization header.
 func (s *SigningKey) AuthorizeRequest(req *http.Request, options ...TokenOption) error {
-	token, err := s.Sign(append(options, withRequestResource(req))...)
+	token, err := s.sign(append(options, withRequestResource(req))...)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (v *VerificationKeyset) AuthorizeRequest(r *http.Request, checks ...TokenCh
 	if err != nil {
 		return "", err
 	}
-	return v.Verify(decoded, append(checks, checkRequestResource(r))...)
+	return v.verify(decoded, append(checks, checkRequestResource(r))...)
 }
 
 func withRequestResource(r *http.Request) TokenOption {

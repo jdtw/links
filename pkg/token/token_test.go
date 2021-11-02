@@ -53,7 +53,7 @@ func TestVerifyWrongKey(t *testing.T) {
 	verifier, signers := generateKeys(t, "alice", "bob")
 
 	// Sign with Alice's key...
-	signed, err := signers[0].Sign(WithResource("foo"))
+	signed, err := signers[0].sign(WithResource("foo"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +64,7 @@ func TestVerifyWrongKey(t *testing.T) {
 	signed = marshal(t, signedProto)
 
 	// Verification should fail.
-	if _, err := verifier.Verify(signed); err == nil { // if NO error
+	if _, err := verifier.verify(signed); err == nil { // if NO error
 		t.Errorf("expected verification failure")
 	}
 
@@ -73,7 +73,7 @@ func TestVerifyWrongKey(t *testing.T) {
 	signed = marshal(t, signedProto)
 
 	// And verification should fail again...
-	if _, err := verifier.Verify(signed); err == nil { // if NO error
+	if _, err := verifier.verify(signed); err == nil { // if NO error
 		t.Errorf("expected verification failure")
 	}
 }
@@ -111,11 +111,11 @@ func TestSignVerify(t *testing.T) {
 	}}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
-			token, err := signer.Sign(tc.options...)
+			token, err := signer.sign(tc.options...)
 			if err != nil {
 				t.Fatal(err)
 			}
-			subject, err := verifier.Verify(token, tc.checks...)
+			subject, err := verifier.verify(token, tc.checks...)
 			switch {
 			case !tc.wantErr && err != nil:
 				t.Fatalf("Verify failed: %v", err)

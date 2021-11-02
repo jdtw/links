@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-const header = "github.com/jdtw/links/pkg/token v0.1.0"
+const header = "github.com/jdtw/links/pkg/token"
 
 type SigningKey struct {
 	key *pb.SigningKey
@@ -67,8 +67,8 @@ func WithExpiry(now time.Time, exp time.Duration) TokenOption {
 	}
 }
 
-// Sign signs a token for the given resource. By default, the expiry time is one minute.
-func (k *SigningKey) Sign(options ...TokenOption) ([]byte, error) {
+// sign signs a token for the given resource. By default, the expiry time is one minute.
+func (k *SigningKey) sign(options ...TokenOption) ([]byte, error) {
 	token := &pb.Token{}
 	WithExpiry(time.Now(), time.Minute)(token)
 	for _, opt := range options {

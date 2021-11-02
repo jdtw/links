@@ -77,7 +77,7 @@ func CheckResource(resource string) TokenCheck {
 	}
 }
 
-func (v *VerificationKeyset) Verify(token []byte, checks ...TokenCheck) (string, error) {
+func (v *VerificationKeyset) verify(token []byte, checks ...TokenCheck) (string, error) {
 	// Unmarshal the signed token.
 	signed := &pb.SignedToken{}
 	if err := proto.Unmarshal(token, signed); err != nil {
