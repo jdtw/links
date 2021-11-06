@@ -29,7 +29,7 @@ func (s *server) routes() {
 	a.HandleFunc("/links/{link}", logged(s.authenticated(s.delete()))).Methods("DELETE")
 
 	// Application
-	s.PathPrefix("/").HandlerFunc(logged(s.redirect()))
+	s.PathPrefix("/").HandlerFunc(logged(s.redirect())).Methods("GET")
 }
 
 // NewHandler sets up routes based on the given key value store.
