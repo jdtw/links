@@ -21,3 +21,6 @@
 
 # Local shell scripts
 deploy/
+
+# Integration test dir
+testtmp/
