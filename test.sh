@@ -60,6 +60,7 @@ echo "Testing failed authorization..."
        --priv "${TEST_DIR}/untrusted.pb" \
        --subject "untrusted-test"
 result=$(./client --priv "${TEST_DIR}/untrusted.pb" \
+                  --addr "${ADDR}" \
                   --add "evil" \
                   --link "http://www.example.com/evil" &&\
              echo "succeeded" || echo "failed")
