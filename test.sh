@@ -43,6 +43,10 @@ echo "Testing add redirect..."
 result=$(curl -s "${ADDR}/foo" -o /dev/null -w "${TEST_OUTPUT}")
 test "${result}" = "302 http://www.example.com/"
 
+echo "Testing hyphens..."
+result=$(curl -s "${ADDR}/f-o-o" -o /dev/null -w "${TEST_OUTPUT}")
+test "${result}" = "302 http://www.example.com/"
+
 echo "Testing get redirect..."
 ./client --priv "${TEST_DIR}/priv.pb" \
          --addr "${ADDR}" \

@@ -17,73 +17,74 @@ func TestRedirect(t *testing.T) {
 		get      string
 		wantCode int
 		wantLoc  string
-	}{
-		{
-			key:      Index,
-			value:    "https://example.com",
-			get:      "/",
-			wantCode: http.StatusFound,
-			wantLoc:  "https://example.com",
-		},
-		{
-			key:      "foo",
-			value:    "https://example.com",
-			get:      "/foo",
-			wantCode: http.StatusFound,
-			wantLoc:  "https://example.com",
-		},
-		{
-			get:      "/notfound",
-			wantCode: http.StatusNotFound,
-		},
-		{
-			key:      "replacements",
-			value:    "https://example.com/{1}/{0}/quack",
-			get:      "/replacements/bar/baz/qux",
-			wantCode: http.StatusFound,
-			wantLoc:  "https://example.com/baz/bar/quack/qux",
-		},
-		{
-			key:      "badreq",
-			value:    "https://example.com/{0}/quack",
-			get:      "/badreq",
-			wantCode: http.StatusBadRequest,
-		},
-		{
-			key:      "query",
-			value:    "https://example.com",
-			get:      "/query/path?e=mc2",
-			wantCode: http.StatusFound,
-			wantLoc:  "https://example.com/path?e=mc2",
-		},
-		{
-			key:      "querytempl",
-			value:    "https://example.com?q=foo",
-			get:      "/querytempl",
-			wantCode: http.StatusFound,
-			wantLoc:  "https://example.com?q=foo",
-		},
-		{
-			key:      "override",
-			value:    "https://example.com?q=default",
-			get:      "/override?q=override",
-			wantCode: http.StatusFound,
-			wantLoc:  "https://example.com?q=override",
-		},
-		{
-			key:      "force",
-			value:    "https://example.com",
-			get:      "/force?",
-			wantCode: http.StatusFound,
-			wantLoc:  "https://example.com?",
-		},
-		{
-			key:      "invalid",
-			rawValue: []byte("garbage"),
-			get:      "/invalid",
-			wantCode: http.StatusInternalServerError,
-		},
-	}
+	}{{
+		key:      Index,
+		value:    "https://example.com",
+		get:      "/",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com",
+	}, {
+		key:      "foo",
+		value:    "https://example.com",
+		get:      "/foo",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com",
+	}, {
+		get:      "/notfound",
+		wantCode: http.StatusNotFound,
+	}, {
+		key:      "replacements",
+		value:    "https://example.com/{1}/{0}/quack",
+		get:      "/replacements/bar/baz/qux",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com/baz/bar/quack/qux",
+	}, {
+		key:      "badreq",
+		value:    "https://example.com/{0}/quack",
+		get:      "/badreq",
+		wantCode: http.StatusBadRequest,
+	}, {
+		key:      "query",
+		value:    "https://example.com",
+		get:      "/query/path?e=mc2",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com/path?e=mc2",
+	}, {
+		key:      "querytempl",
+		value:    "https://example.com?q=foo",
+		get:      "/querytempl",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com?q=foo",
+	}, {
+		key:      "override",
+		value:    "https://example.com?q=default",
+		get:      "/override?q=override",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com?q=override",
+	}, {
+		key:      "force",
+		value:    "https://example.com",
+		get:      "/force?",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com?",
+	}, {
+		key:      "invalid",
+		rawValue: []byte("garbage"),
+		get:      "/invalid",
+		wantCode: http.StatusInternalServerError,
+	}, {
+		key:      "foobar",
+		value:    "https://example.com",
+		get:      "/foo-bar",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com",
+	}, {
+		key:      "abc",
+		value:    "https://example.com/abc",
+		get:      "/a-b-c-----",
+		wantCode: http.StatusFound,
+		wantLoc:  "https://example.com/abc",
+	}}
 
 	for _, tc := range tests {
 		t.Logf("test %q", tc.key)
