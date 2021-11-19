@@ -37,7 +37,7 @@ func subst(le *pb.LinkEntry, paths []string) (string, []string, error) {
 		return "", nil, fmt.Errorf("got %d params, want %d", len(paths), le.RequiredPaths)
 	}
 
-	used := make(map[int]bool, len(paths))
+	used := make([]bool, len(paths))
 	replaced := replacement.ReplaceAllFunc([]byte(le.Link.Uri), func(m []byte) []byte {
 		i := idx(m)
 		used[i] = true

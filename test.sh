@@ -72,3 +72,4 @@ test "${result}" = "failed"
 
 echo "Stopping test server..."
 killall -u ${USER} links
+rm -rf "${TEST_DIR}"
