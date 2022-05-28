@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/jdtw/links/pkg/token"
-	pb "github.com/jdtw/links/proto/token"
 	"google.golang.org/protobuf/proto"
+	"jdtw.dev/links/pkg/token"
+	pb "jdtw.dev/links/proto/token"
 )
 
 var (

@@ -3,7 +3,7 @@ package links
 import (
 	"testing"
 
-	pb "github.com/jdtw/links/proto/links"
+	pb "jdtw.dev/links/proto/links"
 )
 
 func TestSubst(t *testing.T) {

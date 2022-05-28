@@ -24,3 +24,5 @@ deploy/
 
 # Integration test dir
 testtmp/
+
+.vscode/

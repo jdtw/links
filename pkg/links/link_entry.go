@@ -4,8 +4,8 @@ import (
 	"log"
 	"strings"
 
-	pb "github.com/jdtw/links/proto/links"
 	"google.golang.org/protobuf/proto"
+	pb "jdtw.dev/links/proto/links"
 )
 
 const linkKeyPrefix = "lnk:"

@@ -9,8 +9,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jdtw/links/pkg/links"
-	"github.com/jdtw/links/pkg/tokentest"
+	"jdtw.dev/links/pkg/links"
+	"jdtw.dev/links/pkg/tokentest"
 )
 
 func getFreePort(t *testing.T) int {

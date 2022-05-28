@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jdtw/links/pkg/token"
+	"jdtw.dev/links/pkg/token"
 )
 
 type authHandler func(http.ResponseWriter, *http.Request, string)

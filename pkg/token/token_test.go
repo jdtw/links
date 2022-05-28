@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/jdtw/links/proto/token"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	pb "jdtw.dev/links/proto/token"
 )
 
 func generateKeys(t *testing.T, subjects ...string) (*VerificationKeyset, []*SigningKey) {

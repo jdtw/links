@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	pb "github.com/jdtw/links/proto/links"
 	"google.golang.org/protobuf/proto"
+	pb "jdtw.dev/links/proto/links"
 )
 
 func TestRedirect(t *testing.T) {

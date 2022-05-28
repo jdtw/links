@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/jdtw/links/pkg/links"
-	"github.com/jdtw/links/pkg/token"
+	"jdtw.dev/links/pkg/links"
+	"jdtw.dev/links/pkg/token"
 )
 
 var (

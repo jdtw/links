@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/jdtw/links/proto/token"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	pb "jdtw.dev/links/proto/token"
 )
 
-const header = "github.com/jdtw/links/pkg/token"
+const header = "jdtw.dev/links/pkg/token"
 
 type SigningKey struct {
 	key *pb.SigningKey

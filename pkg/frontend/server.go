@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/jdtw/links/pkg/client"
+	"jdtw.dev/links/pkg/client"
 )
 
 const html = `

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/jdtw/links/pkg/token"
+	"jdtw.dev/links/pkg/token"
 )
 
 type server struct {

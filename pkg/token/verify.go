@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	pb "github.com/jdtw/links/proto/token"
 	"google.golang.org/protobuf/proto"
+	pb "jdtw.dev/links/proto/token"
 )
 
 type VerificationKey struct {

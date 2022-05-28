@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/jdtw/links/pkg/token"
-	pb "github.com/jdtw/links/proto/links"
 	"google.golang.org/protobuf/proto"
+	"jdtw.dev/links/pkg/token"
+	pb "jdtw.dev/links/proto/links"
 )
 
 const linksAPI = "/api/links"

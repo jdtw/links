@@ -8,11 +8,11 @@ import (
 	"os"
 	"sort"
 
-	"github.com/jdtw/links/pkg/client"
-	"github.com/jdtw/links/pkg/frontend"
-	"github.com/jdtw/links/pkg/keybase"
-	"github.com/jdtw/links/pkg/links"
-	"github.com/jdtw/links/pkg/token"
+	"jdtw.dev/links/pkg/client"
+	"jdtw.dev/links/pkg/frontend"
+	"jdtw.dev/links/pkg/keybase"
+	"jdtw.dev/links/pkg/links"
+	"jdtw.dev/links/pkg/token"
 )
 
 var (

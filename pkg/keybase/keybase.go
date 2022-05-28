@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/jdtw/links/pkg/client"
 	"github.com/keybase/go-keybase-chat-bot/kbchat"
+	"jdtw.dev/links/pkg/client"
 )
 
 type linksClient struct {

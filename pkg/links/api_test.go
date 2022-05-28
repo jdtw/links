@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	pb "github.com/jdtw/links/proto/links"
 	"google.golang.org/protobuf/proto"
+	pb "jdtw.dev/links/proto/links"
 )
 
 func TestPutRejectsInvalidRequests(t *testing.T) {

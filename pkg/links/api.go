@@ -7,8 +7,8 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	pb "github.com/jdtw/links/proto/links"
 	"google.golang.org/protobuf/proto"
+	pb "jdtw.dev/links/proto/links"
 )
 
 func (s *server) list() authHandler {
