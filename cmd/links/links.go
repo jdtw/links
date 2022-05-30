@@ -32,7 +32,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("os.ReadFile(%s) failed: %v", *keyset, err)
 	}
-	ks, err := token.UnmarshalVerificationKeyset(ksContents)
+	ks, err := token.UnmarshalKeyset(ksContents)
 	if err != nil {
 		log.Fatalf("token.UnmarshalVerificationKeyset(%s) failed: %v", *keyset, err)
 	}

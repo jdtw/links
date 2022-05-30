@@ -14,5 +14,5 @@ require (
 	github.com/stretchr/testify v1.7.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	jdtw.dev/token v0.0.0-20220530011127-31eba06dbc59
+	jdtw.dev/token v0.0.0-20220530080402-a234f3f91538
 )

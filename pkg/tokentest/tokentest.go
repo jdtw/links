@@ -8,7 +8,7 @@ import (
 
 func GenerateKey(t *testing.T, subject string) (*token.VerificationKeyset, *token.SigningKey) {
 	t.Helper()
-	keyset := token.NewVerificationKeyset()
+	keyset := token.NewKeyset()
 	verifier, signer, err := token.GenerateKey(subject)
 	if err != nil {
 		t.Fatal(err)
