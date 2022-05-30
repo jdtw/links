@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
-
-	"jdtw.dev/links/pkg/token"
 )
 
 type authHandler func(http.ResponseWriter, *http.Request, string)
@@ -18,7 +15,7 @@ func (s *server) authenticated(f authHandler) http.HandlerFunc {
 		}
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		subject, err := s.ks.AuthorizeRequest(r, token.CheckExpiry(time.Now()))
+		subject, _, err := s.ks.AuthorizeRequest(r, s.nv)
 		if err != nil {
 			log.Printf("request %+v unauthorized: %v", r, err)
 			http.Error(w, fmt.Sprintf("unauthorized: %v", err), http.StatusUnauthorized)

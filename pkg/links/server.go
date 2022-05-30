@@ -5,14 +5,17 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
-	"jdtw.dev/links/pkg/token"
+	"jdtw.dev/token"
+	"jdtw.dev/token/nonce"
 )
 
 type server struct {
 	kv *KV
 	ks *token.VerificationKeyset
+	nv nonce.Verifier
 	*mux.Router
 }
 
@@ -34,7 +37,7 @@ func (s *server) routes() {
 
 // NewHandler sets up routes based on the given key value store.
 func NewHandler(kv *KV, ks *token.VerificationKeyset) http.Handler {
-	srv := &server{kv, ks, mux.NewRouter()}
+	srv := &server{kv, ks, nonce.NewMapVerifier(time.Minute), mux.NewRouter()}
 	srv.routes()
 	return srv
 }

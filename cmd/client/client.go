@@ -12,7 +12,7 @@ import (
 	"jdtw.dev/links/pkg/frontend"
 	"jdtw.dev/links/pkg/keybase"
 	"jdtw.dev/links/pkg/links"
-	"jdtw.dev/links/pkg/token"
+	"jdtw.dev/token"
 )
 
 var (

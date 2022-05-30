@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"jdtw.dev/links/pkg/links"
-	"jdtw.dev/links/pkg/token"
+	"jdtw.dev/token"
 )
 
 var (

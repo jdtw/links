@@ -8,13 +8,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"time"
 
 	"google.golang.org/protobuf/proto"
-	"jdtw.dev/links/pkg/token"
 	pb "jdtw.dev/links/proto/links"
+	"jdtw.dev/token"
 )
 
-const linksAPI = "/api/links"
+const (
+	linksAPI      = "/api/links"
+	tokenLifetime = time.Second * 30
+)
 
 // ErrNotFound is a sential error for HTTP status code 404.
 var ErrNotFound = errors.New("not found")
@@ -43,7 +47,7 @@ func (c *Client) do(method string, path string, body io.Reader) (*http.Response,
 		return nil, err
 	}
 	if c.Signer != nil {
-		if err := c.Signer.AuthorizeRequest(req); err != nil {
+		if _, err := c.Signer.AuthorizeRequest(req, tokenLifetime); err != nil {
 			return nil, err
 		}
 	}
