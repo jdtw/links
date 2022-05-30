@@ -78,4 +78,20 @@ result=$("${TEST_DIR}/client" --priv "${TEST_DIR}/untrustedpriv.pb" \
              echo "succeeded" || echo "failed")
 test "${result}" = "failed"
 
+echo "Testing nonce reuse..."
+token=$("${TEST_DIR}/tokenpb" sign-token \
+            --resource "GET localhost:9090/api/links" \
+            --lifetime "2m" \
+            "${PRIV}")
+result=$(curl -s -H "Authorization: ${token}" \
+     -o /dev/null \
+     -w "%{http_code}" \
+     "${ADDR}/api/links")
+test "${result}" = "200"
+result=$(curl -s -H "Authorization: ${token}" \
+     -o /dev/null \
+     -w "%{http_code}" \
+     "${ADDR}/api/links")
+test "${result}" = "401"
+
 echo "Tests passed!"
