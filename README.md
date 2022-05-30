@@ -4,10 +4,9 @@
 This repository contains the suite of tools used to run a link redirection service. It contains:
 
 * An HTTP server that performs redirects and exposes a REST API.
-* A tool for creating new JWT signing keys and managing JWT verification keysets.
 * A full-featured client, with several modes:
   * Command-line.
-  * HTTP frontend.
+  * Web client.
   * Keybase chatbot.
 
 The tooling is designed to run a single, locked down instance of the redirection service with a limited set of clients.
@@ -22,7 +21,7 @@ To run the server:
 
 ```
 links --port=9090 \
-      --keyset="${HOME}/.config/links/ks.json" \
+      --keyset="${HOME}/.config/links/keyset.pb" \
       --database="${HOME}/.config/links/db"
 ```
 
@@ -45,45 +44,22 @@ links --port=9090 \
   * Response body: empty
   * Returns: 204 (no content)
 
-All API endpoints require authentication via a JWT.
+All API endpoints require authentication via a [token](https://github.com/jdtw/token).
 
 ## Authentication
 
-Authentication is done via JWTs with the following profile:
-
-* `"issuer"`: `"github.com/jdtw/links/pkg/auth"`
-* `"aud"`: `"<METHOD> <HOST>/<API>"`, e.g. "PUT https://jdtw.us/api/links/foo"
-* `"alg"`: `"EdDSA"`
-* `"use"`: `"sig"`
-* `"kid"`: SHA256 hash of the public key
-* `"sub"`: User identity (e.g. email)
-
-New keys can be created and added to a keyset using the `auth` tool.
-
-Generate a new key pair and add it to a new keyset:
-```
-auth --new \
-     --keyset="${HOME}/.config/links/ks.json" \
-     --priv="{HOME}/.config/links/key.pem" \
-     --subject="user@example.com"
-```
-The verification keyset can then be used in the server, and the private key can be given to user@example.com for use with the client tool.
-
-Generate a new key pair and add it to an existing keyset:
-```
-auth --keyset="${HOME}/.config/links/ks.json" \
-     --priv="{HOME}/.config/links/key.pem" \
-     --subject="user@example.com"
-```
+Authentication is done via signed proto [tokens](https://github.com/jdtw/token). Clients have a private Ed25519 key for signing them, and the server has a keyset of verification keys. Providing a client with a signing key directly is not standard, but since I control all of the clients for my use case, as well as the verification keyset that the server is provisioned with, it is nice not to have to go through an auth flow.
 
 ## Client
 
-The client tool uses a private key to sign JWTs for itself and authenticate to the REST API outlined above. Providing a client with a JWT signing key directly is not standard, but since I control all of the clients for my use case, as well as the verification keyset that the server is provisioned with, it is nice not to have to go through an auth flow. The client can run in three different modes:
+The client tool uses a private key to sign tokens for itself and authenticate to the REST API outlined above. The client can run in three different modes:
 1. Command line.
 1. HTTP server.
 1. Keybase bot.
 
-In any mode, the client requires a private key PEM file and the address of the HTTPS enpoint hosting the REST API. These can be provided by command line flags (`--priv` and `--addr`, respectively), or by using the `LINKS_PRIVATE_KEY` and `LINKS_ADDR` environment variables. Note that both `--priv` and `LINKS_PRIVATE_KEY` should be set to the path of the key file on disk, not the private key PEM directly.
+In any mode, the client requires a path to the private key and the address of the HTTPS enpoint hosting the REST API. These can be provided by command line flags (`--priv` and `--addr`, respectively), or by using the `LINKS_PRIVATE_KEY` and `LINKS_ADDR` environment variables.
+
+> **Note:** The examples below assume that the `LINKS_PRIVATE_KEY` and `LINKS_ADDR` environment variables are set.
 
 ### Command line client
 
@@ -114,7 +90,7 @@ Run an HTTP frontend on port 9999:
 $ client --server=9999
 ```
 
-This will expose a simple form that can be used to add and list links. *DO NOT* expose this to the public internet unless you want to allow arbitrary access to add and view links.
+This will expose a simple form that can be used to add and list links. *DO NOT* expose this to the public internet unless you want to allow arbitrary access to add and view links. (I am currently running this web client exposed to my Tailscale network.)
 
 ### Keybase Chat Bot
 
