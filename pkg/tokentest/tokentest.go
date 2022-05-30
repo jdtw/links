@@ -3,7 +3,7 @@ package tokentest
 import (
 	"testing"
 
-	"jdtw.dev/links/pkg/token"
+	"jdtw.dev/token"
 )
 
 func GenerateKey(t *testing.T, subject string) (*token.VerificationKeyset, *token.SigningKey) {

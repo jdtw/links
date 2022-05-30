@@ -1,24 +1,34 @@
 #! /bin/bash
 set -euxo pipefail
 
-TEST_DIR="./testtmp"
+TEST_DIR="$(pwd)/testdir"
 PORT=9090
 ADDR="http://localhost:${PORT}"
 
-killall -u ${USER} links || true
-rm -rf "${TEST_DIR}"
+cleanup() {
+       exit_status=$?
+       rm -rf "${TEST_DIR}"
+       killall -u ${USER} links || true
+       exit "${exit_status}"
+}
+trap cleanup EXIT
+
 mkdir "${TEST_DIR}"
 
-go build -o . ./...
+go build -o "${TEST_DIR}" ./...
+GOBIN="${TEST_DIR}" go install jdtw.dev/token/cmd/tokenpb@latest
 
-./auth --new --keyset "${TEST_DIR}/keyset.pb" \
-       --priv "${TEST_DIR}/priv.pb" \
-       --subject "test"
-./auth --dump --keyset "${TEST_DIR}/keyset.pb"
+KEYSET="${TEST_DIR}/ks.pb"
+PUB="${TEST_DIR}/pub.pb"
+PRIV="${TEST_DIR}/priv.pb"
+
+"${TEST_DIR}/tokenpb" gen-key --subject "test" --pub "${PUB}" --priv "${PRIV}"
+"${TEST_DIR}/tokenpb" add-key --pub "${PUB}" "${KEYSET}"
+"${TEST_DIR}/tokenpb" dump-keyset "${KEYSET}"
 
 mkdir "${TEST_DIR}/db"
-./links --port "${PORT}" \
-        --keyset "${TEST_DIR}/keyset.pb" \
+"${TEST_DIR}/links" --port "${PORT}" \
+        --keyset "${KEYSET}" \
         --database "${TEST_DIR}/db" &
 
 until curl -s "${ADDR}"; do
@@ -29,14 +39,14 @@ done
 TEST_OUTPUT='%{http_code} %{redirect_url}'
 
 echo "Testing set index..."
-./client --priv "${TEST_DIR}/priv.pb" \
+"${TEST_DIR}/client" --priv "${PRIV}" \
          --addr "${ADDR}" \
          --index "http://example.com"
 result=$(curl -s "${ADDR}" -o /dev/null -w "${TEST_OUTPUT}")
 test "${result}" = "302 http://example.com/"
 
 echo "Testing add redirect..."
-./client --priv "${TEST_DIR}/priv.pb" \
+"${TEST_DIR}/client" --priv "${PRIV}" \
          --addr "${ADDR}" \
          --add "foo" \
          --link "http://www.example.com"
@@ -48,28 +58,24 @@ result=$(curl -s "${ADDR}/f-o-o" -o /dev/null -w "${TEST_OUTPUT}")
 test "${result}" = "302 http://www.example.com/"
 
 echo "Testing get redirect..."
-./client --priv "${TEST_DIR}/priv.pb" \
+"${TEST_DIR}/client" --priv "${PRIV}" \
          --addr "${ADDR}" \
          --get "foo"
 
 echo "Testing delete redirect..."
-./client --priv "${TEST_DIR}/priv.pb" \
+"${TEST_DIR}/client" --priv "${PRIV}" \
          --addr "${ADDR}" \
          --rm "foo"
 result=$(curl -s "${ADDR}/foo" -o /dev/null -w "%{http_code}")
 test "${result}" = "404"
 
 echo "Testing failed authorization..."
-./auth --new --keyset "${TEST_DIR}/keyset.pb" \
-       --priv "${TEST_DIR}/untrusted.pb" \
-       --subject "untrusted-test"
-result=$(./client --priv "${TEST_DIR}/untrusted.pb" \
+"${TEST_DIR}/tokenpb" gen-key --subject "untrusted" --pub "${TEST_DIR}/untrustedpub.pb" --priv "${TEST_DIR}/untrustedpriv.pb"
+result=$("${TEST_DIR}/client" --priv "${TEST_DIR}/untrustedpriv.pb" \
                   --addr "${ADDR}" \
                   --add "evil" \
                   --link "http://www.example.com/evil" &&\
              echo "succeeded" || echo "failed")
 test "${result}" = "failed"
 
-echo "Stopping test server..."
-killall -u ${USER} links
-rm -rf "${TEST_DIR}"
+echo "Tests passed!"
