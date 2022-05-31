@@ -31,10 +31,11 @@ func getFreePort(t *testing.T) int {
 func TestClient(t *testing.T) {
 	ks, signer := tokentest.GenerateKey(t, "test")
 	kv := links.NewMemKV()
+	store := links.NewKVStore(kv)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	addr := fmt.Sprintf("localhost:%d", getFreePort(t))
-	s := &http.Server{Addr: addr, Handler: links.NewHandler(kv, ks)}
+	s := &http.Server{Addr: addr, Handler: links.NewHandler(store, ks)}
 	go func() {
 		defer wg.Done()
 		s.ListenAndServe()

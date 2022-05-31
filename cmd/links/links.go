@@ -46,8 +46,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("links.NewKV(%v) failed: %v", *database, err)
 	}
+	store := links.NewKVStore(kv)
 
 	addr := fmt.Sprint(":", *port)
 	log.Printf("listening on %q", addr)
-	log.Fatal(http.ListenAndServe(addr, links.NewHandler(kv, ks)))
+	log.Fatal(http.ListenAndServe(addr, links.NewHandler(store, ks)))
 }

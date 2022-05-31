@@ -23,7 +23,7 @@ func TestPutRejectsInvalidRequests(t *testing.T) {
 		marshalLink(t, "no-scheme"),
 	}
 	kv := NewMemKV()
-	srv := NewHandler(kv, nil)
+	srv := NewHandler(NewKVStore(kv), nil)
 
 	for _, tc := range tests {
 		rr := httptest.NewRecorder()
@@ -37,7 +37,7 @@ func TestPutRejectsInvalidRequests(t *testing.T) {
 
 func TestCRUD(t *testing.T) {
 	kv := NewMemKV()
-	srv := NewHandler(kv, nil)
+	srv := NewHandler(NewKVStore(kv), nil)
 	serveHTTP := func(method, path string, body io.Reader) *http.Response {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest(method, path, body)

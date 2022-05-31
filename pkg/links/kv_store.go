@@ -8,12 +8,22 @@ import (
 	pb "jdtw.dev/links/proto/links"
 )
 
+type KVStore struct {
+	kv *KV
+}
+
+var _ Store = &KVStore{}
+
+func NewKVStore(kv *KV) *KVStore {
+	return &KVStore{kv}
+}
+
 const linkKeyPrefix = "lnk:"
 
 // LinkKey returns a DB key prefixed with "lnk:"
 func LinkKey(k string) string { return linkKeyPrefix + k }
 
-func (s *server) getLinkEntry(k string) (*pb.LinkEntry, error) {
+func (s *KVStore) Get(k string) (*pb.LinkEntry, error) {
 	data := s.kv.Get(LinkKey(k))
 	if data == nil {
 		return nil, nil
@@ -25,7 +35,7 @@ func (s *server) getLinkEntry(k string) (*pb.LinkEntry, error) {
 	return lepb, nil
 }
 
-func (s *server) putLinkEntry(k string, l *pb.Link) (bool, error) {
+func (s *KVStore) Put(k string, l *pb.Link) (bool, error) {
 	le := &pb.LinkEntry{
 		Link:          l,
 		RequiredPaths: requiredPaths(l),
@@ -37,11 +47,11 @@ func (s *server) putLinkEntry(k string, l *pb.Link) (bool, error) {
 	return s.kv.Put(LinkKey(k), data)
 }
 
-func (s *server) deleteLinkEntry(k string) {
+func (s *KVStore) Delete(k string) {
 	s.kv.Delete(LinkKey(k))
 }
 
-func (s *server) visitLinkEntries(visit func(string, *pb.LinkEntry)) {
+func (s *KVStore) Visit(visit func(string, *pb.LinkEntry)) {
 	s.kv.Iterate(func(k string, v []byte) {
 		if !strings.HasPrefix(k, linkKeyPrefix) {
 			return

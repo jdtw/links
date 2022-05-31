@@ -109,7 +109,7 @@ func TestRedirect(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		srv := NewHandler(kv, nil)
+		srv := NewHandler(NewKVStore(kv), nil)
 		srv.ServeHTTP(rr, req)
 		res := rr.Result()
 
