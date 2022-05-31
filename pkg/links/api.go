@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
 	pb "jdtw.dev/links/proto/links"
 )
 
@@ -19,12 +19,12 @@ func (s *server) list() authHandler {
 		s.visitLinkEntries(func(k string, v *pb.LinkEntry) {
 			lpb.Links[k] = v.Link
 		})
-		data, err := proto.Marshal(lpb)
+		data, err := protojson.Marshal(lpb)
 		if err != nil {
 			internalError(w, err)
 			return
 		}
-		w.Header().Set("Content-Type", "application/x-protobuf")
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(data)
 	}
 }
@@ -41,12 +41,12 @@ func (s *server) get() authHandler {
 			http.NotFound(w, r)
 			return
 		}
-		data, err := proto.Marshal(lepb.Link)
+		data, err := protojson.Marshal(lepb.Link)
 		if err != nil {
 			internalError(w, err)
 			return
 		}
-		w.Header().Set("Content-Type", "application/x-protobuf")
+		w.Header().Set("Content-Type", "application/json")
 		w.Write(data)
 	}
 }
@@ -60,7 +60,7 @@ func (s *server) put() authHandler {
 			return
 		}
 		lpb := new(pb.Link)
-		if err := proto.Unmarshal(data, lpb); err != nil {
+		if err := protojson.Unmarshal(data, lpb); err != nil {
 			badRequest(w, "failed to unmarshal body: %v", err)
 			return
 		}

@@ -10,6 +10,7 @@ import (
 	"path"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	pb "jdtw.dev/links/proto/links"
 	"jdtw.dev/token"
@@ -141,7 +142,7 @@ func api(link string) string {
 }
 
 func marshal(m proto.Message) (io.Reader, error) {
-	b, err := proto.Marshal(m)
+	b, err := protojson.Marshal(m)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +154,7 @@ func unmarshalBody(resp *http.Response, m proto.Message) error {
 	if err != nil {
 		return err
 	}
-	return proto.Unmarshal(b, m)
+	return protojson.Unmarshal(b, m)
 }
 
 func ok(resp *http.Response) error {

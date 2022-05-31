@@ -34,7 +34,7 @@ func main() {
 	}
 	ks, err := token.UnmarshalKeyset(ksContents)
 	if err != nil {
-		log.Fatalf("token.UnmarshalVerificationKeyset(%s) failed: %v", *keyset, err)
+		log.Fatalf("token.UnmarshalKeyset(%s) failed: %v", *keyset, err)
 	}
 
 	if *database != "" {

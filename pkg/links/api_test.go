@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	pb "jdtw.dev/links/proto/links"
 )
@@ -161,9 +162,9 @@ func marshalLink(t *testing.T, uri string) io.Reader {
 
 func marshal(t *testing.T, m proto.Message) io.Reader {
 	t.Helper()
-	b, err := proto.Marshal(m)
+	b, err := protojson.Marshal(m)
 	if err != nil {
-		t.Fatalf("proto.Marshal(%v) failed: %v", m, err)
+		t.Fatalf("protojson.Marshal(%v) failed: %v", m, err)
 	}
 	return bytes.NewReader(b)
 }
@@ -174,7 +175,7 @@ func unmarshal(t *testing.T, r io.Reader, m proto.Message) {
 	if err != nil {
 		t.Fatalf("ioutil.ReadAll failed: %v", err)
 	}
-	if err := proto.Unmarshal(b, m); err != nil {
-		t.Fatalf("proto.Unmarshal failed: %v", err)
+	if err := protojson.Unmarshal(b, m); err != nil {
+		t.Fatalf("protojson.Unmarshal failed: %v", err)
 	}
 }
