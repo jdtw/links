@@ -31,6 +31,15 @@ jobs:
       run: go build -v ./...
     - name: Test
       run: go test -v ./...
+    - name: Create table
+      run: |
+        echo "$POSTGRES_HOST:$POSTGRES_PORT:$POSTGRES_DB:$POSTGRES_USER:$POSTGRES_PASSWORD" | tee ~/.pgpass
+        chmod 0600 ~/.pgpass
+        psql -d "$POSTGRES_DB" -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -c 'CREATE TABLE IF NOT EXISTS test (
+          path TEXT PRIMARY KEY,
+          link TEXT,
+          segments INT
+        );'
     - name: Integration Test
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
