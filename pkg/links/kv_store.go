@@ -47,11 +47,12 @@ func (s *KVStore) Put(k string, l *pb.Link) (bool, error) {
 	return s.kv.Put(LinkKey(k), data)
 }
 
-func (s *KVStore) Delete(k string) {
+func (s *KVStore) Delete(k string) error {
 	s.kv.Delete(LinkKey(k))
+	return nil
 }
 
-func (s *KVStore) Visit(visit func(string, *pb.LinkEntry)) {
+func (s *KVStore) Visit(visit func(string, *pb.LinkEntry)) error {
 	s.kv.Iterate(func(k string, v []byte) {
 		if !strings.HasPrefix(k, linkKeyPrefix) {
 			return
@@ -64,4 +65,5 @@ func (s *KVStore) Visit(visit func(string, *pb.LinkEntry)) {
 		}
 		visit(k, lepb)
 	})
+	return nil
 }

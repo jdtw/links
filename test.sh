@@ -27,9 +27,8 @@ PRIV="${TEST_DIR}/priv.pb"
 "${TEST_DIR}/tokenpb" dump-keyset "${KEYSET}"
 
 mkdir "${TEST_DIR}/db"
-"${TEST_DIR}/links" --port "${PORT}" \
-        --keyset "${KEYSET}" \
-        --database "${TEST_DIR}/db" &
+DATABASE_URL='postgresql://localhost' "${TEST_DIR}/links" --port "${PORT}" \
+        --keyset "${KEYSET}" &
 
 until curl -s "${ADDR}"; do
     echo "Waiting for server to start..."
@@ -68,6 +67,14 @@ echo "Testing delete redirect..."
          --rm "foo"
 result=$(curl -s "${ADDR}/foo" -o /dev/null -w "%{http_code}")
 test "${result}" = "404"
+
+echo "Testing redirect with param expansion..."
+"${TEST_DIR}/client" --priv "${PRIV}" \
+         --addr "${ADDR}" \
+         --add "foo" \
+         --link "http://www.example.com/bar/{0}"
+result=$(curl -s "${ADDR}/foo/baz/quux" -o /dev/null -w "${TEST_OUTPUT}")
+test "${result}" = "302 http://www.example.com/bar/baz/quux"
 
 echo "Testing failed authorization..."
 "${TEST_DIR}/tokenpb" gen-key --subject "untrusted" --pub "${TEST_DIR}/untrustedpub.pb" --priv "${TEST_DIR}/untrustedpriv.pb"

@@ -37,16 +37,26 @@ func main() {
 		log.Fatalf("token.UnmarshalKeyset(%s) failed: %v", *keyset, err)
 	}
 
-	if *database != "" {
-		if err := os.MkdirAll(*database, os.ModePerm); err != nil {
-			log.Fatalf("os.MkdirAll(%v) failed: %v", *database, err)
+	var store links.Store
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		log.Printf("Connecting to postgres database...")
+		pgStore, err := links.NewPostgresStore(dbURL)
+		if err != nil {
+			log.Fatalf("links.NewPostgresStore failed: %v", err)
 		}
+		store = pgStore
+	} else {
+		if *database != "" {
+			if err := os.MkdirAll(*database, os.ModePerm); err != nil {
+				log.Fatalf("os.MkdirAll(%v) failed: %v", *database, err)
+			}
+		}
+		kv, err := links.NewKV(*database)
+		if err != nil {
+			log.Fatalf("links.NewKV(%v) failed: %v", *database, err)
+		}
+		store = links.NewKVStore(kv)
 	}
-	kv, err := links.NewKV(*database)
-	if err != nil {
-		log.Fatalf("links.NewKV(%v) failed: %v", *database, err)
-	}
-	store := links.NewKVStore(kv)
 
 	addr := fmt.Sprint(":", *port)
 	log.Printf("listening on %q", addr)
