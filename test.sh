@@ -27,7 +27,7 @@ PRIV="${TEST_DIR}/priv.pb"
 "${TEST_DIR}/tokenpb" dump-keyset "${KEYSET}"
 
 mkdir "${TEST_DIR}/db"
-DATABASE_URL='postgresql://localhost' "${TEST_DIR}/links" --port "${PORT}" \
+"${TEST_DIR}/links" --port "${PORT}" \
         --keyset "${KEYSET}" &
 
 until curl -s "${ADDR}"; do
