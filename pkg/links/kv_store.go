@@ -1,7 +1,6 @@
 package links
 
 import (
-	"log"
 	"strings"
 
 	"google.golang.org/protobuf/proto"
@@ -60,7 +59,6 @@ func (s *KVStore) Visit(visit func(string, *pb.LinkEntry)) error {
 		k = strings.TrimPrefix(k, linkKeyPrefix)
 		lepb := new(pb.LinkEntry)
 		if err := proto.Unmarshal(v, lepb); err != nil {
-			log.Printf("failed to unmarshal link entry key=%v, v=%v: %v", k, v, err)
 			return
 		}
 		visit(k, lepb)
