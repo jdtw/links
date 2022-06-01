@@ -60,7 +60,9 @@ func (s *PostgresStore) Get(key string) (*pb.LinkEntry, error) {
 
 func (s *PostgresStore) Put(key string, l *pb.Link) (bool, error) {
 	_, err := s.db.Exec(put, key, l.Uri, requiredPaths(l))
-	return false, err
+	// Always returns true, since there's no easy way to differentiate
+	// created (true) vs updated.
+	return true, err
 }
 
 func (s *PostgresStore) Delete(key string) error {
