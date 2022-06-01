@@ -61,13 +61,6 @@ echo "Testing get redirect..."
          --addr "${ADDR}" \
          --get "foo"
 
-echo "Testing delete redirect..."
-"${TEST_DIR}/client" --priv "${PRIV}" \
-         --addr "${ADDR}" \
-         --rm "foo"
-result=$(curl -s "${ADDR}/foo" -o /dev/null -w "%{http_code}")
-test "${result}" = "404"
-
 echo "Testing redirect with param expansion..."
 "${TEST_DIR}/client" --priv "${PRIV}" \
          --addr "${ADDR}" \
@@ -75,6 +68,22 @@ echo "Testing redirect with param expansion..."
          --link "http://www.example.com/bar/{0}"
 result=$(curl -s "${ADDR}/foo/baz/quux" -o /dev/null -w "${TEST_OUTPUT}")
 test "${result}" = "302 http://www.example.com/bar/baz/quux"
+
+echo "Testing list all..."
+"${TEST_DIR}/client" --priv "${PRIV}" \
+         --addr "${ADDR}" \
+
+echo "Testing delete redirect..."
+"${TEST_DIR}/client" --priv "${PRIV}" \
+         --addr "${ADDR}" \
+         --rm "foo"
+result=$(curl -s "${ADDR}/foo" -o /dev/null -w "%{http_code}")
+test "${result}" = "404"
+
+echo "Test deleting something already deleted..."
+"${TEST_DIR}/client" --priv "${PRIV}" \
+         --addr "${ADDR}" \
+         --rm "foo"
 
 echo "Testing failed authorization..."
 "${TEST_DIR}/tokenpb" gen-key --subject "untrusted" --pub "${TEST_DIR}/untrustedpub.pb" --priv "${TEST_DIR}/untrustedpriv.pb"

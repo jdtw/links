@@ -45,6 +45,7 @@ func main() {
 			log.Fatalf("links.NewPostgresStore failed: %v", err)
 		}
 		store = pgStore
+		defer pgStore.Close()
 	} else {
 		if *database != "" {
 			if err := os.MkdirAll(*database, os.ModePerm); err != nil {

@@ -31,13 +31,9 @@ jobs:
       run: go build -v ./...
     - name: Test
       run: go test -v ./...
-    - name: Create table
+    - name: Create Table
       run: |
-        psql postgres://postgres:postgres@localhost:5432/postgres -c 'CREATE TABLE IF NOT EXISTS test (
-          path TEXT PRIMARY KEY,
-          link TEXT,
-          segments INT
-        );'
+        psql postgres://postgres:postgres@localhost:5432/postgres -a -c '\i links.sql'
     - name: Integration Test
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
