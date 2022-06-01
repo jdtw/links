@@ -33,7 +33,7 @@ jobs:
       run: go test -v ./...
     - name: Create table
       run: |
-        psql -d postgres -U postgres -h localhost -c 'CREATE TABLE IF NOT EXISTS test (
+        psql postgres://postgres:postgres@localhost:5432/postgres -c 'CREATE TABLE IF NOT EXISTS test (
           path TEXT PRIMARY KEY,
           link TEXT,
           segments INT
