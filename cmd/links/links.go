@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
@@ -12,54 +13,42 @@ import (
 )
 
 var (
-	port     = flag.Int("port", 9090, "Port")
-	keyset   = flag.String("keyset", "", "Verification keyset")
-	database = flag.String("database", "", "Database directory")
+	port      = flag.Int("port", 9090, "Port")
+	ephemeral = flag.Bool("ephemeral", false, "If true, don't connect to DATABASE_URL and use in-memory storage")
 )
 
 func main() {
 	flag.Parse()
 	log.SetPrefix("links: ")
 
-	if *keyset == "" {
-		*keyset = os.Getenv("LINKS_KEYSET")
+	encoded := os.Getenv("LINKS_KEYSET")
+	if encoded == "" {
+		log.Fatal("LINKS_KEYSET environment variable must be set")
 	}
-	if *keyset == "" {
-		log.Fatal("missing 'keyset' flag")
-	}
-
-	ksContents, err := os.ReadFile(*keyset)
+	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		log.Fatalf("os.ReadFile(%s) failed: %v", *keyset, err)
+		log.Fatalf("base64 decoding keyset failed: %v", err)
 	}
-	ks, err := token.UnmarshalKeyset(ksContents)
+	keyset, err := token.UnmarshalKeyset(decoded)
 	if err != nil {
-		log.Fatalf("token.UnmarshalKeyset(%s) failed: %v", *keyset, err)
+		log.Fatalf("token.UnmarshalKeyset failed: %v", err)
 	}
+	log.Printf("loaded keyset:\n%s", keyset)
 
 	var store links.Store
-	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
-		log.Printf("Connecting to postgres database...")
-		pgStore, err := links.NewPostgresStore(dbURL)
+	if *ephemeral {
+		log.Printf("Running in ephemeral mode!")
+		store = links.NewMemStore()
+	} else {
+		pgStore, err := links.NewPostgresStore(os.Getenv("DATABASE_URL"))
 		if err != nil {
 			log.Fatalf("links.NewPostgresStore failed: %v", err)
 		}
 		store = pgStore
 		defer pgStore.Close()
-	} else {
-		if *database != "" {
-			if err := os.MkdirAll(*database, os.ModePerm); err != nil {
-				log.Fatalf("os.MkdirAll(%v) failed: %v", *database, err)
-			}
-		}
-		kv, err := links.NewKV(*database)
-		if err != nil {
-			log.Fatalf("links.NewKV(%v) failed: %v", *database, err)
-		}
-		store = links.NewKVStore(kv)
 	}
 
 	addr := fmt.Sprint(":", *port)
 	log.Printf("listening on %q", addr)
-	log.Fatal(http.ListenAndServe(addr, links.NewHandler(store, ks)))
+	log.Fatal(http.ListenAndServe(addr, links.NewHandler(store, keyset)))
 }

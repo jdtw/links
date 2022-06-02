@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"google.golang.org/protobuf/proto"
 	pb "jdtw.dev/links/proto/links"
 )
 
@@ -13,7 +12,6 @@ func TestRedirect(t *testing.T) {
 	tests := []struct {
 		key      string
 		value    string
-		rawValue []byte
 		get      string
 		wantCode int
 		wantLoc  string
@@ -68,11 +66,6 @@ func TestRedirect(t *testing.T) {
 		wantCode: http.StatusFound,
 		wantLoc:  "https://example.com?",
 	}, {
-		key:      "invalid",
-		rawValue: []byte("garbage"),
-		get:      "/invalid",
-		wantCode: http.StatusInternalServerError,
-	}, {
 		key:      "foobar",
 		value:    "https://example.com",
 		get:      "/foo-bar",
@@ -89,18 +82,8 @@ func TestRedirect(t *testing.T) {
 	for _, tc := range tests {
 		t.Logf("test %q", tc.key)
 
-		val := tc.rawValue
-		if val == nil {
-			le := linkEntry(tc.value)
-			leBytes, err := proto.Marshal(le)
-			if err != nil {
-				t.Errorf("proto.Marshal(%+v) failed: %v", le, err)
-				continue
-			}
-			val = leBytes
-		}
-		kv := NewMemKV()
-		kv.Put(LinkKey(tc.key), val)
+		s := NewMemStore()
+		s.Put(tc.key, &pb.Link{Uri: tc.value})
 
 		req, err := http.NewRequest("GET", tc.get, nil)
 		if err != nil {
@@ -109,7 +92,7 @@ func TestRedirect(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		srv := NewHandler(NewKVStore(kv), nil)
+		srv := NewHandler(s, nil)
 		srv.ServeHTTP(rr, req)
 		res := rr.Result()
 
@@ -123,15 +106,5 @@ func TestRedirect(t *testing.T) {
 		if loc := res.Header["Location"]; len(loc) != 1 || loc[0] != tc.wantLoc {
 			t.Errorf("got location %v, want %q", loc, tc.wantLoc)
 		}
-	}
-}
-
-func linkEntry(uri string) *pb.LinkEntry {
-	l := &pb.Link{
-		Uri: uri,
-	}
-	return &pb.LinkEntry{
-		Link:          l,
-		RequiredPaths: requiredPaths(l),
 	}
 }

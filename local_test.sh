@@ -1,15 +1,15 @@
 #!/bin/bash
 set -euxo pipefail
 
-DB='postgres://localhost/test'
+export DATABASE_URL='postgres://localhost/test'
 
 cleanup() {
        exit_status=$?
-       psql "${DB}" -c 'drop table if exists links'
+       psql "${DATABASE_URL}" -c 'drop table if exists links'
        exit "${exit_status}"
 }
 trap cleanup EXIT
 
-psql "${DB}" -a -c '\i links.sql'
-DATABASE_URL="${DB}" ./test.sh
-psql "${DB}" -c 'select * from links'
+psql "${DATABASE_URL}" -a -c '\i links.sql'
+./test.sh
+psql "${DATABASE_URL}" -c 'select * from links'

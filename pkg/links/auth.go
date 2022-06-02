@@ -12,7 +12,8 @@ type authHandler func(http.ResponseWriter, *http.Request, string)
 func (s *server) authenticated(f authHandler) http.HandlerFunc {
 	if s.ks == nil {
 		return func(w http.ResponseWriter, r *http.Request) {
-			f(w, r, "")
+			log.Printf("server missing keyset")
+			http.Error(w, "server missing keyset", http.StatusUnauthorized)
 		}
 	}
 	return func(w http.ResponseWriter, r *http.Request) {

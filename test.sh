@@ -25,10 +25,10 @@ PRIV="${TEST_DIR}/priv.pb"
 "${TEST_DIR}/tokenpb" gen-key --subject "test" --pub "${PUB}" --priv "${PRIV}"
 "${TEST_DIR}/tokenpb" add-key --pub "${PUB}" "${KEYSET}"
 "${TEST_DIR}/tokenpb" dump-keyset "${KEYSET}"
+export LINKS_KEYSET=$(base64 -i "${KEYSET}")
 
 mkdir "${TEST_DIR}/db"
-"${TEST_DIR}/links" --port "${PORT}" \
-        --keyset "${KEYSET}" &
+"${TEST_DIR}/links" --port "${PORT}" &
 
 until curl -s "${ADDR}"; do
     echo "Waiting for server to start..."
