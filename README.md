@@ -1,5 +1,5 @@
 # Links
-[![Go](https://github.com/jdtw/links/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/jdtw/links/actions/workflows/go.yml)
+[![Go](https://github.com/jdtw/links/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/jdtw/links/actions/workflows/test.yml)
 
 This repository contains the suite of tools used to run a link redirection service. It contains:
 
@@ -11,19 +11,15 @@ This repository contains the suite of tools used to run a link redirection servi
 
 The tooling is designed to run a single, locked down instance of the redirection service with a limited set of clients.
 
+## Quickstart
+
+Run `docker compose up` from the `dev/` directory to get a local instance running.
+
 ## Server
 
 The server maintains a key-value store of friendly names to URI redirect templates. For example, `rfc -> https://datatracker.ietf.org/doc/html/rfc{0}` will redirect `GET /rfc/5280` to `https://datatracker.ietf.org/doc/html/rfc5280`. Try it out: [jdtw.us/rfc/5280](https://jdtw.us/rfc/5280).
 
 Since this was written for personal use (i.e. not just anyone can add a link), the "database" is a simple mutex-protected in-memory `map`. Each DB entry is written to a file when added (one file per key-value pair) via the API below, and all DB entries are read on service startup.
-
-To run the server:
-
-```
-links --port=9090 \
-      --keyset="${HOME}/.config/links/keyset.pb" \
-      --database="${HOME}/.config/links/db"
-```
 
 ## REST API
 
@@ -59,7 +55,8 @@ The client tool uses a private key to sign tokens for itself and authenticate to
 
 In any mode, the client requires a path to the private key and the address of the HTTPS enpoint hosting the REST API. These can be provided by command line flags (`--priv` and `--addr`, respectively), or by using the `LINKS_PRIVATE_KEY` and `LINKS_ADDR` environment variables.
 
-> **Note:** The examples below assume that the `LINKS_PRIVATE_KEY` and `LINKS_ADDR` environment variables are set.
+> **Note:**
+> The examples below assume that the `LINKS_PRIVATE_KEY` and `LINKS_ADDR` environment variables are set.
 
 ### Command line client
 
@@ -90,7 +87,10 @@ Run an HTTP frontend on port 9999:
 $ client --server=9999
 ```
 
-This will expose a simple form that can be used to add and list links. *DO NOT* expose this to the public internet unless you want to allow arbitrary access to add and view links. (I am currently running this web client exposed to my Tailscale network.)
+This will expose a simple form that can be used to add and list links.
+
+> **Warning**
+> *DO NOT* expose this to the public internet unless you want to allow arbitrary access to add and view links. (I am currently running this web client exposed to my Tailscale network.)
 
 ### Keybase Chat Bot
 

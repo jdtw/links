@@ -1,0 +1,40 @@
+version: '3.9'
+services:
+  db:
+    image: postgres
+    user: postgres
+    volumes:
+      - ../links.sql:/docker-entrypoint-initdb.d/links.sql
+    ports:
+      - 15432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+  links:
+    build:
+      context: ..
+      dockerfile: dev/Dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      LINKS_KEYSET: ${KEYSET}
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+    depends_on:
+      db:
+        condition: service_healthy
+  links-client:
+    build:
+      context: ..
+      dockerfile: dev/Dockerfile
+    ports:
+      - 9090:9090
+    command: /app/client --server=9090
+    environment:
+      LINKS_PRIVATE_KEY: /keys/priv.pb
+      LINKS_ADDR: http://links:8080
+    depends_on:
+      - links
