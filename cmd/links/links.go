@@ -7,19 +7,28 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"jdtw.dev/links/pkg/links"
 	"jdtw.dev/token"
 )
 
 var (
-	port      = flag.Int("port", 9090, "Port")
 	ephemeral = flag.Bool("ephemeral", false, "If true, don't connect to DATABASE_URL and use in-memory storage")
 )
 
 func main() {
 	flag.Parse()
 	log.SetPrefix("links: ")
+
+	port := 8080
+	if env := os.Getenv("PORT"); env != "" {
+		parsed, err := strconv.Atoi(env)
+		if err != nil {
+			log.Fatalf("failed to parse PORT %q", env)
+		}
+		port = parsed
+	}
 
 	encoded := os.Getenv("LINKS_KEYSET")
 	if encoded == "" {
@@ -48,7 +57,7 @@ func main() {
 		defer pgStore.Close()
 	}
 
-	addr := fmt.Sprint(":", *port)
+	addr := fmt.Sprint(":", port)
 	log.Printf("listening on %q", addr)
 	log.Fatal(http.ListenAndServe(addr, links.NewHandler(store, keyset)))
 }

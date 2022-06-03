@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 TEST_DIR="$(pwd)/testdir"
-PORT=9090
+export PORT=8080
 ADDR="http://localhost:${PORT}"
 
 cleanup() {
@@ -28,7 +28,7 @@ PRIV="${TEST_DIR}/priv.pb"
 export LINKS_KEYSET=$(base64 -i "${KEYSET}")
 
 mkdir "${TEST_DIR}/db"
-"${TEST_DIR}/links" --port "${PORT}" &
+"${TEST_DIR}/links" &
 
 until curl -s "${ADDR}"; do
     echo "Waiting for server to start..."
@@ -96,7 +96,7 @@ test "${result}" = "failed"
 
 echo "Testing nonce reuse..."
 token=$("${TEST_DIR}/tokenpb" sign-token \
-            --resource "GET localhost:9090/api/links" \
+            --resource "GET localhost:${PORT}/api/links" \
             --lifetime "2m" \
             "${PRIV}")
 result=$(curl -s -H "Authorization: ${token}" \
