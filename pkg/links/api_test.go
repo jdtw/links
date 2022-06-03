@@ -2,16 +2,21 @@ package links
 
 import (
 	"bytes"
+	"encoding/base64"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"jdtw.dev/links/pkg/tokentest"
 	pb "jdtw.dev/links/proto/links"
+	"jdtw.dev/token"
 )
 
 func TestPutRejectsInvalidRequests(t *testing.T) {
@@ -22,25 +27,93 @@ func TestPutRejectsInvalidRequests(t *testing.T) {
 		marshalLink(t, "http://embedded\x00null"),
 		marshalLink(t, "no-scheme"),
 	}
-	kv := NewMemKV()
-	srv := NewHandler(kv, nil)
+	keyset, priv := tokentest.GenerateKey(t, "test")
+	srv := NewHandler(NewMemStore(), keyset)
 
 	for _, tc := range tests {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest("PUT", "/api/links/foo", tc)
+		signRequest(t, priv, req)
 		srv.ServeHTTP(rr, req)
 		if sc := rr.Result().StatusCode; sc != http.StatusBadRequest {
-			t.Errorf("PUT %q returned %d, want 400", tc, sc)
+			t.Errorf("PUT %v returned %d, want 400", tc, sc)
+		}
+	}
+}
+
+func TestNilKeysetFailsClosed(t *testing.T) {
+	routes := []struct {
+		method string
+		path   string
+	}{{"GET", "/api/links"},
+		{"PUT", "/api/links/foo"},
+		{"GET", "/api/links/foo"},
+		{"DELETE", "/api/links/foo"}}
+
+	_, priv := tokentest.GenerateKey(t, "test")
+	srv := NewHandler(NewMemStore(), nil)
+	for _, r := range routes {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(r.method, r.path, nil)
+		signRequest(t, priv, req)
+		srv.ServeHTTP(rr, req)
+		if code := rr.Result().StatusCode; code != http.StatusUnauthorized {
+			t.Errorf("%v got code %d, want %d", r, code, http.StatusUnauthorized)
+		}
+	}
+}
+
+func TestUnsignedRequestFails(t *testing.T) {
+	routes := []struct {
+		method string
+		path   string
+	}{{"GET", "/api/links"},
+		{"PUT", "/api/links/foo"},
+		{"GET", "/api/links/foo"},
+		{"DELETE", "/api/links/foo"}}
+
+	keyset, _ := tokentest.GenerateKey(t, "test")
+	srv := NewHandler(NewMemStore(), keyset)
+	for _, r := range routes {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(r.method, r.path, nil)
+		srv.ServeHTTP(rr, req)
+		if code := rr.Result().StatusCode; code != http.StatusUnauthorized {
+			t.Errorf("%v got code %d, want %d", r, code, http.StatusUnauthorized)
+		}
+	}
+}
+
+func TestUntrustedKeyFails(t *testing.T) {
+	routes := []struct {
+		method string
+		path   string
+	}{{"GET", "/api/links"},
+		{"PUT", "/api/links/foo"},
+		{"GET", "/api/links/foo"},
+		{"DELETE", "/api/links/foo"}}
+
+	keyset, _ := tokentest.GenerateKey(t, "test")
+	_, priv := tokentest.GenerateKey(t, "evil")
+	srv := NewHandler(NewMemStore(), keyset)
+	for _, r := range routes {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(r.method, r.path, nil)
+		signRequest(t, priv, req)
+		srv.ServeHTTP(rr, req)
+		if code := rr.Result().StatusCode; code != http.StatusUnauthorized {
+			t.Errorf("%v got code %d, want %d", r, code, http.StatusUnauthorized)
 		}
 	}
 }
 
 func TestCRUD(t *testing.T) {
-	kv := NewMemKV()
-	srv := NewHandler(kv, nil)
+	keyset, priv := tokentest.GenerateKey(t, "test")
+	srv := NewHandler(NewMemStore(), keyset)
 	serveHTTP := func(method, path string, body io.Reader) *http.Response {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest(method, path, body)
+		signRequest(t, priv, req)
 		srv.ServeHTTP(rr, req)
 		return rr.Result()
 	}
@@ -178,4 +251,21 @@ func unmarshal(t *testing.T, r io.Reader, m proto.Message) {
 	if err := protojson.Unmarshal(b, m); err != nil {
 		t.Fatalf("protojson.Unmarshal failed: %v", err)
 	}
+}
+
+// signRequest manually signs a request. We cannot use the AuthorizeRequest
+// method provided by the token module because this is a httptest request,
+// which looks like a server request, not a client one.
+func signRequest(t *testing.T, s *token.SigningKey, r *http.Request) {
+	t.Helper()
+	opts := &token.SignOptions{
+		Resource: fmt.Sprintf("%s %s%s", r.Method, r.Host, r.URL),
+		Lifetime: time.Second * 10,
+	}
+	signed, _, err := s.Sign(opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded := base64.URLEncoding.EncodeToString(signed)
+	r.Header.Set("Authorization", token.Scheme+encoded)
 }

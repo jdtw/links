@@ -24,20 +24,11 @@ func (s *server) redirect() http.HandlerFunc {
 		}
 
 		// Look up the key, and unmarshal the LinkEntry from the DB
-		le, err := s.getLinkEntry(key)
+		key = strings.ReplaceAll(key, "-", "")
+		le, err := s.store.Get(key)
 		if err != nil {
 			internalError(w, err)
 			return
-		}
-		// If that wasn't found and the key contains a hypen, try again
-		// with the hyphen(s) removed.
-		if le == nil && strings.ContainsRune(key, '-') {
-			key = strings.ReplaceAll(key, "-", "")
-			le, err = s.getLinkEntry(key)
-			if err != nil {
-				internalError(w, err)
-				return
-			}
 		}
 		if le == nil {
 			http.NotFound(w, r)

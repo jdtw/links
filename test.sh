@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 TEST_DIR="$(pwd)/testdir"
-PORT=9090
+export PORT=8080
 ADDR="http://localhost:${PORT}"
 
 cleanup() {
@@ -25,11 +25,10 @@ PRIV="${TEST_DIR}/priv.pb"
 "${TEST_DIR}/tokenpb" gen-key --subject "test" --pub "${PUB}" --priv "${PRIV}"
 "${TEST_DIR}/tokenpb" add-key --pub "${PUB}" "${KEYSET}"
 "${TEST_DIR}/tokenpb" dump-keyset "${KEYSET}"
+export LINKS_KEYSET=$(base64 -i "${KEYSET}")
 
 mkdir "${TEST_DIR}/db"
-"${TEST_DIR}/links" --port "${PORT}" \
-        --keyset "${KEYSET}" \
-        --database "${TEST_DIR}/db" &
+"${TEST_DIR}/links" &
 
 until curl -s "${ADDR}"; do
     echo "Waiting for server to start..."
@@ -62,12 +61,29 @@ echo "Testing get redirect..."
          --addr "${ADDR}" \
          --get "foo"
 
+echo "Testing redirect with param expansion..."
+"${TEST_DIR}/client" --priv "${PRIV}" \
+         --addr "${ADDR}" \
+         --add "foo" \
+         --link "http://www.example.com/bar/{0}"
+result=$(curl -s "${ADDR}/foo/baz/quux" -o /dev/null -w "${TEST_OUTPUT}")
+test "${result}" = "302 http://www.example.com/bar/baz/quux"
+
+echo "Testing list all..."
+"${TEST_DIR}/client" --priv "${PRIV}" \
+         --addr "${ADDR}" \
+
 echo "Testing delete redirect..."
 "${TEST_DIR}/client" --priv "${PRIV}" \
          --addr "${ADDR}" \
          --rm "foo"
 result=$(curl -s "${ADDR}/foo" -o /dev/null -w "%{http_code}")
 test "${result}" = "404"
+
+echo "Test deleting something already deleted..."
+"${TEST_DIR}/client" --priv "${PRIV}" \
+         --addr "${ADDR}" \
+         --rm "foo"
 
 echo "Testing failed authorization..."
 "${TEST_DIR}/tokenpb" gen-key --subject "untrusted" --pub "${TEST_DIR}/untrustedpub.pb" --priv "${TEST_DIR}/untrustedpriv.pb"
@@ -80,7 +96,7 @@ test "${result}" = "failed"
 
 echo "Testing nonce reuse..."
 token=$("${TEST_DIR}/tokenpb" sign-token \
-            --resource "GET localhost:9090/api/links" \
+            --resource "GET localhost:${PORT}/api/links" \
             --lifetime "2m" \
             "${PRIV}")
 result=$(curl -s -H "Authorization: ${token}" \
