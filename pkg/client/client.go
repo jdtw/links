@@ -82,25 +82,6 @@ func (c *Client) List() (map[string]string, error) {
 	return l, nil
 }
 
-func (c *Client) Add(links map[string]string) error {
-	lpb := &pb.Links{
-		Links: make(map[string]*pb.Link),
-	}
-	for k, v := range links {
-		lpb.Links[k] = &pb.Link{Uri: v}
-	}
-	body, err := marshal(lpb)
-	if err != nil {
-		return err
-	}
-	resp, err := c.do("POST", linksAPI, body)
-	if err != nil {
-		return err
-	}
-	resp.Body.Close()
-	return nil
-}
-
 func (c *Client) Get(link string) (string, error) {
 	resp, err := c.do("GET", api(link), nil)
 	if err != nil {
