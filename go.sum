@@ -192,7 +192,5 @@ gopkg.in/yaml.v2 v2.4.0/go.mod h1:RDklbk79AGWmwhnvt/jBztapEOGDOx6ZbXqjP6csGnQ=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c h1:dUUwHk2QECo/6vqA44rthZ8ie2QXMNeKRTHCNY2nXvo=
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt0JzvZhAg=
-jdtw.dev/token v0.1.1 h1:USL8hclSIjw5RhNbi8AaJnioa/aNdaLSWYEupP/YX2I=
-jdtw.dev/token v0.1.1/go.mod h1:MnO1406VqlJNt5Su/bjZtEso1iOXF1dyq4pZpV6fEtg=
 jdtw.dev/token v0.1.2 h1:8BqRP5DyEBHgFyQj/L590x/2UdBl9Ne7F0HnaJUe4pM=
 jdtw.dev/token v0.1.2/go.mod h1:MnO1406VqlJNt5Su/bjZtEso1iOXF1dyq4pZpV6fEtg=
