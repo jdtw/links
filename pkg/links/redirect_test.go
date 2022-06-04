@@ -1,6 +1,7 @@
 package links
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -83,7 +84,7 @@ func TestRedirect(t *testing.T) {
 		t.Logf("test %q", tc.key)
 
 		s := NewMemStore()
-		s.Put(tc.key, &pb.Link{Uri: tc.value})
+		s.Put(context.Background(), tc.key, &pb.Link{Uri: tc.value})
 
 		req, err := http.NewRequest("GET", tc.get, nil)
 		if err != nil {

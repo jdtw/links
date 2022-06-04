@@ -1,11 +1,12 @@
 package links
 
 import (
-	"database/sql"
+	"context"
 	"errors"
 	"fmt"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	pb "jdtw.dev/links/proto/links"
 )
 
@@ -18,7 +19,7 @@ const (
 )
 
 type PostgresStore struct {
-	db *sql.DB
+	db *pgxpool.Pool
 }
 
 var _ Store = &PostgresStore{}
@@ -29,25 +30,28 @@ func (s *PostgresStore) Close() {
 	}
 }
 
-func NewPostgresStore(source string) (*PostgresStore, error) {
-	s := &PostgresStore{}
-	var err error
-	s.db, err = sql.Open("pgx", source)
+func NewPostgresStore(ctx context.Context, source string) (*PostgresStore, error) {
+	cfg, err := pgxpool.ParseConfig(source)
 	if err != nil {
-		return nil, fmt.Errorf("sql.Open failed: %w", err)
+		return nil, err
+	}
+	s := &PostgresStore{}
+	s.db, err = pgxpool.ConnectConfig(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("pgxpool.ConnectConfig failed: %w", err)
 	}
 
-	if err := s.db.Ping(); err != nil {
+	if err := s.db.Ping(ctx); err != nil {
 		return nil, fmt.Errorf("db.Ping failed: %v", err)
 	}
 	return s, nil
 }
 
-func (s *PostgresStore) Get(key string) (*pb.LinkEntry, error) {
+func (s *PostgresStore) Get(ctx context.Context, key string) (*pb.LinkEntry, error) {
 	var link string
 	var segments int
-	if err := s.db.QueryRow(get, key).Scan(&link, &segments); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	if err := s.db.QueryRow(ctx, get, key).Scan(&link, &segments); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
@@ -58,20 +62,20 @@ func (s *PostgresStore) Get(key string) (*pb.LinkEntry, error) {
 	}, nil
 }
 
-func (s *PostgresStore) Put(key string, l *pb.Link) (bool, error) {
-	_, err := s.db.Exec(put, key, l.Uri, requiredPaths(l))
+func (s *PostgresStore) Put(ctx context.Context, key string, l *pb.Link) (bool, error) {
+	_, err := s.db.Exec(ctx, put, key, l.Uri, requiredPaths(l))
 	// Always returns true, since there's no easy way to differentiate
 	// created (true) vs updated.
 	return true, err
 }
 
-func (s *PostgresStore) Delete(key string) error {
-	_, err := s.db.Exec(del, key)
+func (s *PostgresStore) Delete(ctx context.Context, key string) error {
+	_, err := s.db.Exec(ctx, del, key)
 	return err
 }
 
-func (s *PostgresStore) Visit(visit func(string, *pb.LinkEntry)) error {
-	rows, err := s.db.Query(list)
+func (s *PostgresStore) Visit(ctx context.Context, visit func(string, *pb.LinkEntry)) error {
+	rows, err := s.db.Query(ctx, list)
 	if err != nil {
 		return err
 	}

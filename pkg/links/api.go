@@ -16,7 +16,7 @@ func (s *server) list() authHandler {
 		lpb := &pb.Links{
 			Links: make(map[string]*pb.Link),
 		}
-		s.store.Visit(func(k string, v *pb.LinkEntry) {
+		s.store.Visit(r.Context(), func(k string, v *pb.LinkEntry) {
 			lpb.Links[k] = v.Link
 		})
 		data, err := protojson.Marshal(lpb)
@@ -32,7 +32,7 @@ func (s *server) list() authHandler {
 func (s *server) get() authHandler {
 	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
-		lepb, err := s.store.Get(l)
+		lepb, err := s.store.Get(r.Context(), l)
 		if err != nil {
 			internalError(w, err)
 			return
@@ -80,7 +80,7 @@ func (s *server) put() authHandler {
 			badRequest(w, "URI %q has no scheme", lpb.Uri)
 			return
 		}
-		created, err := s.store.Put(l, lpb)
+		created, err := s.store.Put(r.Context(), l, lpb)
 		if err != nil {
 			internalError(w, err)
 			return
@@ -98,7 +98,7 @@ func (s *server) put() authHandler {
 func (s *server) delete() authHandler {
 	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
-		s.store.Delete(l)
+		s.store.Delete(r.Context(), l)
 		w.WriteHeader(http.StatusNoContent)
 		log.Printf("%s deleted %q", sub, l)
 	}

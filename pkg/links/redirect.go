@@ -25,7 +25,7 @@ func (s *server) redirect() http.HandlerFunc {
 
 		// Look up the key, and unmarshal the LinkEntry from the DB
 		key = strings.ReplaceAll(key, "-", "")
-		le, err := s.store.Get(key)
+		le, err := s.store.Get(r.Context(), key)
 		if err != nil {
 			internalError(w, err)
 			return

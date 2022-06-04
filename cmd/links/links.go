@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"flag"
 	"fmt"
@@ -49,7 +50,8 @@ func main() {
 		log.Printf("Running in ephemeral mode!")
 		store = links.NewMemStore()
 	} else {
-		pgStore, err := links.NewPostgresStore(os.Getenv("DATABASE_URL"))
+		ctx := context.Background()
+		pgStore, err := links.NewPostgresStore(ctx, os.Getenv("DATABASE_URL"))
 		if err != nil {
 			log.Fatalf("links.NewPostgresStore failed: %v", err)
 		}
