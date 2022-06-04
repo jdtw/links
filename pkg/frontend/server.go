@@ -12,7 +12,15 @@ import (
 )
 
 const html = `
-<h1>Add Link</h1>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Links</title>
+</head>
+<body>
+<h1>➕ Add Link</h1>
 <form method="POST">
   <table>
 	<tr>
@@ -26,13 +34,22 @@ const html = `
 	</table>
   <input type="submit">
 </form>
-<h1>Links</h1>
+<h1>❌ Delete Link</h1>
+<form method="POST" action="/rm">
+	<select name="link">
+	{{range .}}<option value="{{.Link}}">{{.Link}}</option>{{end}}
+	</select>
+  <input type="submit">
+</form>
+<h1>🔗 Links</h1>
 <table>
   <tr><th>Link</th><th>URI</th></tr>
   {{range .}}
   <tr><td>{{.Link}}</td><td><a href="{{.URI}}">{{.URI}}</a></td></tr>
   {{end}}
 </table>
+</body>
+</html>
 `
 
 // NewHandler creates a new frontent handler with the given client.
@@ -49,6 +66,7 @@ type server struct {
 
 func (s *server) routes() {
 	s.HandleFunc("/", s.addLink())
+	s.HandleFunc("/rm", s.removeLink())
 }
 
 func (s *server) addLink() http.HandlerFunc {
@@ -74,6 +92,21 @@ func (s *server) addLink() http.HandlerFunc {
 			return
 		}
 		tmpl.Execute(w, sortLinks(m))
+	}
+}
+
+func (s *server) removeLink() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		link := r.FormValue("link")
+		if err := s.cli.Delete(link); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusFound)
 	}
 }
 

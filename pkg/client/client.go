@@ -145,6 +145,7 @@ func ok(resp *http.Response) error {
 	case http.StatusNotFound:
 		return fmt.Errorf("%w: %s %s", ErrNotFound, resp.Request.Method, resp.Request.RequestURI)
 	default:
-		return fmt.Errorf("%s %s failed: %s", resp.Request.Method, resp.Request.URL, resp.Status)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("%s %s failed: %s %s", resp.Request.Method, resp.Request.URL, resp.Status, body)
 	}
 }
