@@ -6,7 +6,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/keybase/go-keybase-chat-bot v0.0.0-20220322223021-75d497527469
 	google.golang.org/protobuf v1.28.0
-	jdtw.dev/token v0.1.2
+	jdtw.dev/token v0.1.3
 )
 
 require (
