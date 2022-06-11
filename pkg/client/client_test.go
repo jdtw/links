@@ -73,4 +73,12 @@ func TestClient(t *testing.T) {
 			t.Fatalf("client.List[foo] = %v, want bar", got["foo"])
 		}
 	}
+	{
+		if err := c.Delete("foo"); err != nil {
+			t.Fatalf("client.Delete(foo) failed: %v", err)
+		}
+		if _, err := c.Get("foo"); !errors.Is(err, ErrNotFound) {
+			t.Fatal("expected link foo to be deleted")
+		}
+	}
 }
