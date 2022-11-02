@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 // Index is used for special handling for the root path; it is stored
@@ -21,6 +23,17 @@ func (s *server) redirect() http.HandlerFunc {
 		key, paths := split[0], split[1:]
 		if key == "" {
 			key = Index
+		}
+
+		// If prefixed with the /qr/ path, show a QR instead of redirecting.
+		qr := false
+		if key == "qr" {
+			qr = true
+			if len(paths) == 0 {
+				key = Index
+			} else {
+				key, paths = paths[0], paths[1:]
+			}
 		}
 
 		// Look up the key, and unmarshal the LinkEntry from the DB
@@ -58,7 +71,21 @@ func (s *server) redirect() http.HandlerFunc {
 		if rq := r.URL.RawQuery; rq != "" {
 			loc.RawQuery = rq
 		}
+		if qr {
+			writeQR(w, loc)
+			return
+		}
 		log.Printf("redirecting %s to %s", r.URL, loc)
 		http.Redirect(w, r, loc.String(), http.StatusFound)
 	}
+}
+
+func writeQR(w http.ResponseWriter, u *url.URL) {
+	png, err := qrcode.Encode(u.String(), qrcode.High, 256)
+	if err != nil {
+		log.Printf("qrcode.Encode(%s) failed: %v", u, err)
+		internalError(w, err)
+	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Write(png)
 }
