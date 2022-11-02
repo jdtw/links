@@ -56,6 +56,10 @@ echo "Testing hyphens..."
 result=$(curl -s "${ADDR}/f-o-o" -o /dev/null -w "${TEST_OUTPUT}")
 test "${result}" = "302 http://www.example.com/"
 
+echo "Testing QR code..."
+result=$(curl -s "${ADDR}/qr/foo" -o /dev/null -w '%{http_code} %{content_type}')
+test "${result}" = "200 image/png"
+
 echo "Testing get redirect..."
 "${TEST_DIR}/client" --priv "${PRIV}" \
          --addr "${ADDR}" \

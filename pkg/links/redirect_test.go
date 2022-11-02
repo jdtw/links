@@ -109,3 +109,45 @@ func TestRedirect(t *testing.T) {
 		}
 	}
 }
+
+func TestQR(t *testing.T) {
+	tests := []struct {
+		key   string
+		value string
+		get   string
+	}{{
+		key:   Index,
+		value: "https://example.com",
+		get:   "/qr",
+	}, {
+		key:   "foo",
+		value: "https://example.com",
+		get:   "/qr/foo",
+	}}
+
+	for _, tc := range tests {
+		t.Logf("test %q", tc.key)
+
+		s := NewMemStore()
+		s.Put(context.Background(), tc.key, &pb.Link{Uri: tc.value})
+
+		req, err := http.NewRequest("GET", tc.get, nil)
+		if err != nil {
+			t.Errorf("NewRequest(%v) failed: %v", tc.get, err)
+			continue
+		}
+
+		rr := httptest.NewRecorder()
+		srv := NewHandler(s, nil)
+		srv.ServeHTTP(rr, req)
+		res := rr.Result()
+
+		if res.StatusCode != http.StatusOK {
+			t.Errorf("result %+v: got code %v, want OK", res, res.StatusCode)
+			continue
+		}
+		if ct := res.Header["Content-Type"]; len(ct) != 1 || ct[0] != "image/png" {
+			t.Errorf("got Content-Type %v, want image/png", ct)
+		}
+	}
+}
