@@ -1,7 +1,7 @@
 package links
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -54,7 +54,7 @@ func (s *server) get() authHandler {
 func (s *server) put() authHandler {
 	return func(w http.ResponseWriter, r *http.Request, sub string) {
 		l := mux.Vars(r)["link"]
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			internalError(w, err)
 			return

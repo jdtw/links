@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -244,9 +243,9 @@ func marshal(t *testing.T, m proto.Message) io.Reader {
 
 func unmarshal(t *testing.T, r io.Reader, m proto.Message) {
 	t.Helper()
-	b, err := ioutil.ReadAll(r)
+	b, err := io.ReadAll(r)
 	if err != nil {
-		t.Fatalf("ioutil.ReadAll failed: %v", err)
+		t.Fatalf("os.ReadAll failed: %v", err)
 	}
 	if err := protojson.Unmarshal(b, m); err != nil {
 		t.Fatalf("protojson.Unmarshal failed: %v", err)

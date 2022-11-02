@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"path"
 	"time"
@@ -131,7 +130,7 @@ func marshal(m proto.Message) (io.Reader, error) {
 }
 
 func unmarshalBody(resp *http.Response, m proto.Message) error {
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
