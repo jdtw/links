@@ -7,7 +7,6 @@ This repository contains the suite of tools used to run a link redirection servi
 * A full-featured client, with several modes:
   * Command-line.
   * Web client.
-  * Keybase chatbot.
 
 The tooling is designed to run a single, locked down instance of the redirection service with a limited set of clients.
 
@@ -23,14 +22,14 @@ The server maintains a database of friendly names to URI redirect templates. For
 
 * `GET /api/links` returns all links in the database.
   * Request body: empty
-  * Response body: serialized `links.Links` proto.
+  * Response body: `links.Links` JSON proto.
   * Returns: 200 (OK)
 * `GET /api/links/{link}` looks up a single link.
   * Request body: empty
-  * Response body: serialized `links.Link` proto.
+  * Response body: `links.Link` JSON proto.
   * Returns: 200 (OK) or 404 (not found)
 * `PUT /api/links/{link}` creates or updates a link.
-  * Request body: serialized `links.Link` proto.
+  * Request body: `links.Link` JSON proto.
   * Response body: empty
   * Returns: 201 (created) if created, or 204 (no content) if updated.
 * `DELETE /api/links/{link}` removes a link.
@@ -49,7 +48,6 @@ Authentication is done via signed proto [tokens](https://github.com/jdtw/token).
 The client tool uses a private key to sign tokens for itself and authenticate to the REST API outlined above. The client can run in three different modes:
 1. Command line.
 1. HTTP server.
-1. Keybase bot.
 
 In any mode, the client requires a path to the private key and the address of the HTTPS enpoint hosting the REST API. These can be provided by command line flags (`--priv` and `--addr`, respectively), or by using the `LINKS_PRIVATE_KEY` and `LINKS_ADDR` environment variables.
 
@@ -89,32 +87,3 @@ This will expose a simple form that can be used to add and list links.
 
 > **Warning**
 > *DO NOT* expose this to the public internet unless you want to allow arbitrary access to add and view links. (I am currently running this web client exposed to my Tailscale network.)
-
-### Keybase Chat Bot
-
-Start a chat bot (requires keybase to be installed):
-```
-$ client --keybase_loc=/usr/bin/keybase
-```
-
-You can then chat with the keybase user running the client, using the following commands:
-
-Add a link:
-```
-> !links add example https://example.com
-```
-
-List all links:
-```
-> !links ls
-```
-
-Get a specific link:
-```
-> !links ls example
-```
-
-Remove a link:
-```
-> !links rm example
-```
