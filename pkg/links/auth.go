@@ -17,7 +17,7 @@ func (s *server) authenticated(f authHandler) http.HandlerFunc {
 		}
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		subject, _, err := s.ks.AuthorizeRequest(r, s.nv)
+		subject, _, err := s.ks.AuthorizeRequest(r, s.skew, s.nv)
 		if err != nil {
 			if dump, dumpErr := httputil.DumpRequest(r, false); dumpErr == nil {
 				log.Printf("request unauthorized: %v\n%s", err, dump)

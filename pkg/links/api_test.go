@@ -27,7 +27,7 @@ func TestPutRejectsInvalidRequests(t *testing.T) {
 		marshalLink(t, "no-scheme"),
 	}
 	keyset, priv := tokentest.GenerateKey(t, "test")
-	srv := NewHandler(NewMemStore(), keyset)
+	srv := NewHandler(NewMemStore(), keyset, 0)
 
 	for _, tc := range tests {
 		rr := httptest.NewRecorder()
@@ -50,7 +50,7 @@ func TestNilKeysetFailsClosed(t *testing.T) {
 		{"DELETE", "/api/links/foo"}}
 
 	_, priv := tokentest.GenerateKey(t, "test")
-	srv := NewHandler(NewMemStore(), nil)
+	srv := NewHandler(NewMemStore(), nil, 0)
 	for _, r := range routes {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest(r.method, r.path, nil)
@@ -72,7 +72,7 @@ func TestUnsignedRequestFails(t *testing.T) {
 		{"DELETE", "/api/links/foo"}}
 
 	keyset, _ := tokentest.GenerateKey(t, "test")
-	srv := NewHandler(NewMemStore(), keyset)
+	srv := NewHandler(NewMemStore(), keyset, 0)
 	for _, r := range routes {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest(r.method, r.path, nil)
@@ -94,7 +94,7 @@ func TestUntrustedKeyFails(t *testing.T) {
 
 	keyset, _ := tokentest.GenerateKey(t, "test")
 	_, priv := tokentest.GenerateKey(t, "evil")
-	srv := NewHandler(NewMemStore(), keyset)
+	srv := NewHandler(NewMemStore(), keyset, 0)
 	for _, r := range routes {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest(r.method, r.path, nil)
@@ -108,7 +108,7 @@ func TestUntrustedKeyFails(t *testing.T) {
 
 func TestCRUD(t *testing.T) {
 	keyset, priv := tokentest.GenerateKey(t, "test")
-	srv := NewHandler(NewMemStore(), keyset)
+	srv := NewHandler(NewMemStore(), keyset, 0)
 	serveHTTP := func(method, path string, body io.Reader) *http.Response {
 		rr := httptest.NewRecorder()
 		req := httptest.NewRequest(method, path, body)
