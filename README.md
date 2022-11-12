@@ -23,14 +23,14 @@ The server maintains a database of friendly names to URI redirect templates. For
 
 * `GET /api/links` returns all links in the database.
   * Request body: empty
-  * Response body: serialized `links.Links` proto.
+  * Response body: `links.Links` JSON proto.
   * Returns: 200 (OK)
 * `GET /api/links/{link}` looks up a single link.
   * Request body: empty
-  * Response body: serialized `links.Link` proto.
+  * Response body: `links.Link` JSON proto.
   * Returns: 200 (OK) or 404 (not found)
 * `PUT /api/links/{link}` creates or updates a link.
-  * Request body: serialized `links.Link` proto.
+  * Request body: `links.Link` JSON proto.
   * Response body: empty
   * Returns: 201 (created) if created, or 204 (no content) if updated.
 * `DELETE /api/links/{link}` removes a link.
