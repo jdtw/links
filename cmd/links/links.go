@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"jdtw.dev/links/pkg/links"
 	"jdtw.dev/token"
@@ -59,7 +60,17 @@ func main() {
 		defer pgStore.Close()
 	}
 
+	skew := time.Duration(0)
+	if val := os.Getenv("SKEW"); val != "" {
+		d, err := time.ParseDuration(val)
+		if err != nil {
+			log.Fatalf("failed to parse %q as a time.Duration: %v", val, err)
+		}
+		skew = d
+		log.Printf("Allowing auth skew of %s", skew)
+	}
+
 	addr := fmt.Sprint(":", port)
 	log.Printf("listening on %q", addr)
-	log.Fatal(http.ListenAndServe(addr, links.NewHandler(store, keyset)))
+	log.Fatal(http.ListenAndServe(addr, links.NewHandler(store, keyset, skew)))
 }

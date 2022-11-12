@@ -34,7 +34,7 @@ func TestClient(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	addr := fmt.Sprintf("localhost:%d", getFreePort(t))
-	s := &http.Server{Addr: addr, Handler: links.NewHandler(store, ks)}
+	s := &http.Server{Addr: addr, Handler: links.NewHandler(store, ks, 0)}
 	go func() {
 		defer wg.Done()
 		s.ListenAndServe()

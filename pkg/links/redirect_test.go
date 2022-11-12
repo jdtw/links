@@ -93,7 +93,7 @@ func TestRedirect(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		srv := NewHandler(s, nil)
+		srv := NewHandler(s, nil, 0)
 		srv.ServeHTTP(rr, req)
 		res := rr.Result()
 
@@ -138,7 +138,7 @@ func TestQR(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		srv := NewHandler(s, nil)
+		srv := NewHandler(s, nil, 0)
 		srv.ServeHTTP(rr, req)
 		res := rr.Result()
 

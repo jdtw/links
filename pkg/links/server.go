@@ -16,6 +16,7 @@ type server struct {
 	store Store
 	ks    *token.VerificationKeyset
 	nv    nonce.Verifier
+	skew  time.Duration
 	*mux.Router
 }
 
@@ -36,8 +37,8 @@ func (s *server) routes() {
 }
 
 // NewHandler sets up routes based on the given key value store.
-func NewHandler(store Store, ks *token.VerificationKeyset) http.Handler {
-	srv := &server{store, ks, nonce.NewMapVerifier(time.Minute), mux.NewRouter()}
+func NewHandler(store Store, ks *token.VerificationKeyset, skew time.Duration) http.Handler {
+	srv := &server{store, ks, nonce.NewMapVerifier(time.Minute), skew, mux.NewRouter()}
 	srv.routes()
 	return srv
 }
