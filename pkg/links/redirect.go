@@ -26,9 +26,8 @@ func (s *server) redirect() http.HandlerFunc {
 		}
 
 		// If prefixed with the /qr/ path, show a QR instead of redirecting.
-		qr := false
-		if key == "qr" {
-			qr = true
+		qr := key == "qr"
+		if qr {
 			if len(paths) == 0 {
 				key = Index
 			} else {
@@ -85,6 +84,7 @@ func writeQR(w http.ResponseWriter, u *url.URL) {
 	if err != nil {
 		log.Printf("qrcode.Encode(%s) failed: %v", u, err)
 		internalError(w, err)
+		return
 	}
 	w.Header().Set("Content-Type", "image/png")
 	w.Write(png)
