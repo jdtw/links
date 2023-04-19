@@ -6,13 +6,16 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"google.golang.org/protobuf/encoding/protojson"
 	pb "jdtw.dev/links/proto/links"
 )
 
-func (s *server) list() authHandler {
-	return func(w http.ResponseWriter, r *http.Request, sub string) {
+func (s *server) list() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rid := middleware.GetReqID(r.Context())
+
 		lpb := &pb.Links{
 			Links: make(map[string]*pb.Link),
 		}
@@ -21,7 +24,7 @@ func (s *server) list() authHandler {
 		})
 		data, err := protojson.Marshal(lpb)
 		if err != nil {
-			internalError(w, err)
+			internalError(w, err, rid)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -29,12 +32,14 @@ func (s *server) list() authHandler {
 	}
 }
 
-func (s *server) get() authHandler {
-	return func(w http.ResponseWriter, r *http.Request, sub string) {
-		l := mux.Vars(r)["link"]
+func (s *server) get() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rid := middleware.GetReqID(r.Context())
+
+		l := chi.URLParam(r, "link")
 		lepb, err := s.store.Get(r.Context(), l)
 		if err != nil {
-			internalError(w, err)
+			internalError(w, err, rid)
 			return
 		}
 		if lepb == nil {
@@ -43,7 +48,7 @@ func (s *server) get() authHandler {
 		}
 		data, err := protojson.Marshal(lepb.Link)
 		if err != nil {
-			internalError(w, err)
+			internalError(w, err, rid)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -51,12 +56,14 @@ func (s *server) get() authHandler {
 	}
 }
 
-func (s *server) put() authHandler {
-	return func(w http.ResponseWriter, r *http.Request, sub string) {
-		l := mux.Vars(r)["link"]
+func (s *server) put() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rid := middleware.GetReqID(r.Context())
+
+		l := chi.URLParam(r, "link")
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			internalError(w, err)
+			internalError(w, err, rid)
 			return
 		}
 		lpb := new(pb.Link)
@@ -82,24 +89,28 @@ func (s *server) put() authHandler {
 		}
 		created, err := s.store.Put(r.Context(), l, lpb)
 		if err != nil {
-			internalError(w, err)
+			internalError(w, err, rid)
 			return
 		}
+
+		sub := subject(r.Context())
 		if created {
 			w.WriteHeader(http.StatusCreated)
-			log.Printf("%s added %q -> %q", sub, l, lpb.Uri)
+			log.Printf("[%s] %s added %q -> %q", rid, sub, l, lpb.Uri)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
-		log.Printf("%s updated %q -> %q", sub, l, lpb.Uri)
+		log.Printf("[%s] %s updated %q -> %q", rid, sub, l, lpb.Uri)
 	}
 }
 
-func (s *server) delete() authHandler {
-	return func(w http.ResponseWriter, r *http.Request, sub string) {
-		l := mux.Vars(r)["link"]
+func (s *server) delete() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rid := middleware.GetReqID(r.Context())
+
+		l := chi.URLParam(r, "link")
 		s.store.Delete(r.Context(), l)
 		w.WriteHeader(http.StatusNoContent)
-		log.Printf("%s deleted %q", sub, l)
+		log.Printf("[%s] %s deleted %q", rid, subject(r.Context()), l)
 	}
 }

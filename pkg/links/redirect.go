@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/go-chi/chi/middleware"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
@@ -15,6 +16,8 @@ const Index = ".index"
 
 func (s *server) redirect() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		rid := middleware.GetReqID(r.Context())
+
 		// The first path segment is the key into our DB.
 		// The remaining path segments are paths to be appended
 		// or substituted in the redirect.
@@ -39,7 +42,7 @@ func (s *server) redirect() http.HandlerFunc {
 		key = strings.ReplaceAll(key, "-", "")
 		le, err := s.store.Get(r.Context(), key)
 		if err != nil {
-			internalError(w, err)
+			internalError(w, err, rid)
 			return
 		}
 		if le == nil {
@@ -58,7 +61,7 @@ func (s *server) redirect() http.HandlerFunc {
 
 		loc, err := url.Parse(uri)
 		if err != nil {
-			internalError(w, err)
+			internalError(w, err, rid)
 			return
 		}
 		if len(paths) > 0 {
@@ -71,21 +74,16 @@ func (s *server) redirect() http.HandlerFunc {
 			loc.RawQuery = rq
 		}
 		if qr {
-			writeQR(w, loc)
+			png, err := qrcode.Encode(loc.String(), qrcode.High, 256)
+			if err != nil {
+				internalError(w, err, rid)
+				return
+			}
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(png)
 			return
 		}
-		log.Printf("redirecting %s to %s", r.URL, loc)
+		log.Printf("[%s] redirecting %s to %s", rid, r.URL, loc)
 		http.Redirect(w, r, loc.String(), http.StatusFound)
 	}
-}
-
-func writeQR(w http.ResponseWriter, u *url.URL) {
-	png, err := qrcode.Encode(u.String(), qrcode.High, 256)
-	if err != nil {
-		log.Printf("qrcode.Encode(%s) failed: %v", u, err)
-		internalError(w, err)
-		return
-	}
-	w.Header().Set("Content-Type", "image/png")
-	w.Write(png)
 }

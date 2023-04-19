@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"jdtw.dev/token"
 	"jdtw.dev/token/nonce"
 )
@@ -17,50 +17,49 @@ type server struct {
 	ks    *token.VerificationKeyset
 	nv    nonce.Verifier
 	skew  time.Duration
-	*mux.Router
+	*chi.Mux
 }
 
 func (s *server) routes() {
+	s.Use(middleware.RequestID)
+	s.Use(middleware.Logger)
 	// REST API
-	a := s.PathPrefix("/api").Subrouter()
-	// Get all links as a Links proto.
-	a.HandleFunc("/links", logged(s.authenticated(s.list()))).Methods("GET")
-	// Get a speficic link.
-	a.HandleFunc("/links/{link}", logged(s.authenticated(s.get()))).Methods("GET")
-	// Create or update a link.
-	a.HandleFunc("/links/{link}", logged(s.authenticated(s.put()))).Methods("PUT")
-	// Remove a link.
-	a.HandleFunc("/links/{link}", logged(s.authenticated(s.delete()))).Methods("DELETE")
+	s.Route("/api", func(r chi.Router) {
+		r.Use(s.authenticated())
+		// Get all links as a Links proto.
+		r.Get("/links", s.list())
+		// Get a speficic link.
+		r.Get("/links/{link}", s.get())
+		// Create or update a link.
+		r.Put("/links/{link}", s.put())
+		// Remove a link.
+		r.Delete("/links/{link}", s.delete())
+	})
 
 	// Application
-	s.PathPrefix("/").HandlerFunc(logged(s.redirect())).Methods("GET")
+	s.Get("/*", s.redirect())
 }
 
 // NewHandler sets up routes based on the given key value store.
 func NewHandler(store Store, ks *token.VerificationKeyset, skew time.Duration) http.Handler {
-	srv := &server{store, ks, nonce.NewMapVerifier(time.Minute), skew, mux.NewRouter()}
+	srv := &server{store, ks, nonce.NewMapVerifier(time.Minute), skew, chi.NewRouter()}
 	srv.routes()
 	return srv
 }
 
-func internalError(w http.ResponseWriter, err error) {
-	log.Printf("internal error: %v", err)
+type contextKey struct {
+	name string
+}
+
+func (k *contextKey) String() string {
+	return "jdtw.dev/links " + k.name
+}
+
+func internalError(w http.ResponseWriter, err error, rid string) {
+	log.Printf("[%s] internal error: %v", rid, err)
 	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
 
 func badRequest(w http.ResponseWriter, format string, a ...interface{}) {
 	http.Error(w, fmt.Sprintf(format, a...), http.StatusBadRequest)
-}
-
-// logged logs the HTTP request, respecting the X-Forwarded-For header to support
-// running behind a proxy.
-func logged(hf http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		remote := strings.Join(r.Header["X-Forwarded-For"], " ")
-		if remote == "" {
-			remote = r.RemoteAddr
-		}
-		log.Printf("%s %s %s %s %s", remote, r.Method, r.Host, r.URL, r.UserAgent())
-		hf(w, r)
-	}
 }

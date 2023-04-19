@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi"
 	"jdtw.dev/links/pkg/client"
 )
 
@@ -54,19 +54,19 @@ const html = `
 
 // NewHandler creates a new frontent handler with the given client.
 func NewHandler(cli *client.Client) http.Handler {
-	srv := &server{cli, mux.NewRouter()}
+	srv := &server{cli, chi.NewRouter()}
 	srv.routes()
 	return srv
 }
 
 type server struct {
 	cli *client.Client
-	*mux.Router
+	*chi.Mux
 }
 
 func (s *server) routes() {
 	s.HandleFunc("/", s.addLink())
-	s.HandleFunc("/rm", s.removeLink())
+	s.Post("/rm", s.removeLink())
 }
 
 func (s *server) addLink() http.HandlerFunc {
@@ -97,10 +97,6 @@ func (s *server) addLink() http.HandlerFunc {
 
 func (s *server) removeLink() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
 		link := r.FormValue("link")
 		if err := s.cli.Delete(link); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

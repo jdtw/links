@@ -1,30 +1,47 @@
 package links
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
+
+	"github.com/go-chi/chi/middleware"
 )
 
-type authHandler func(http.ResponseWriter, *http.Request, string)
+var subjectCtxKey = &contextKey{"Subject"}
 
-func (s *server) authenticated(f authHandler) http.HandlerFunc {
+func (s *server) authenticated() func(next http.Handler) http.Handler {
 	if s.ks == nil {
-		return func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("server missing keyset")
-			http.Error(w, "server missing keyset", http.StatusUnauthorized)
+		log.Printf("server missing keyset!")
+		return func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "server missing keyset", http.StatusUnauthorized)
+			})
 		}
 	}
-	return func(w http.ResponseWriter, r *http.Request) {
-		subject, _, err := s.ks.AuthorizeRequest(r, s.skew, s.nv)
-		if err != nil {
-			if dump, dumpErr := httputil.DumpRequest(r, false); dumpErr == nil {
-				log.Printf("request unauthorized: %v\n%s", err, dump)
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rid := middleware.GetReqID(r.Context())
+			subject, _, err := s.ks.AuthorizeRequest(r, s.skew, s.nv)
+			if err != nil {
+				if dump, dumpErr := httputil.DumpRequest(r, false); dumpErr == nil {
+					log.Printf("[%s] request unauthorized: %v\n%s", rid, err, dump)
+				}
+				http.Error(w, fmt.Sprintf("unauthorized: %v", err), http.StatusUnauthorized)
+				return
 			}
-			http.Error(w, fmt.Sprintf("unauthorized: %v", err), http.StatusUnauthorized)
-			return
-		}
-		f(w, r, subject)
+			ctx := context.WithValue(r.Context(), subjectCtxKey, subject)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
 	}
+}
+
+func subject(ctx context.Context) string {
+	if user, ok := ctx.Value(subjectCtxKey).(string); ok {
+		return user
+	}
+	return ""
 }
