@@ -3,7 +3,7 @@ module jdtw.dev/links
 go 1.18
 
 require (
-	github.com/go-chi/chi v1.5.4
+	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	google.golang.org/protobuf v1.30.0
