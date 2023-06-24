@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"embed"
 	"html/template"
 	"log"
 	"net/http"
@@ -11,43 +12,45 @@ import (
 	"jdtw.dev/links/pkg/client"
 )
 
+//go:embed static/*
+var static embed.FS
+
 const html = `
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Links</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="static/styles.css" />
+  <title>Links</title>
 </head>
 <body>
 <h1>➕ Add Link</h1>
 <form method="POST">
   <table>
-	<tr>
+  <tr>
     <td><label>Link:</label></td>
     <td><input type="text" name="link"></td>
-	</tr>
-	<tr>
+  </tr>
+  <tr>
     <td><label>URI:</label></td>
     <td><input type="text" name="uri"></td>
-	</tr>
-	</table>
-  <input type="submit">
-</form>
-<h1>❌ Delete Link</h1>
-<form method="POST" action="/rm">
-	<select name="link">
-	{{range .}}<option value="{{.Link}}">{{.Link}}</option>{{end}}
-	</select>
+  </tr>
+  </table>
   <input type="submit">
 </form>
 <h1>🔗 Links</h1>
-<table>
+<table id="links">
   <tr><th>Link</th><th>URI</th></tr>
   {{range .}}
-  <tr><td>{{.Link}}</td><td><a href="{{.URI}}">{{.URI}}</a></td></tr>
+  <tr>
+    <td>{{.Link}}</td>
+    <td><a href="{{.URI}}">{{.URI}}</a></td>
+    <td><button title="Delete" data-remove="{{.Link}}">❌</button></td>
+  </tr>
   {{end}}
 </table>
+<script src="/static/links.js"></script>
 </body>
 </html>
 `
@@ -65,8 +68,9 @@ type server struct {
 }
 
 func (s *server) routes() {
+	s.Handle("/static/*", http.FileServer(http.FS(static)))
+	s.Delete("/rm/{link}", s.removeLink())
 	s.HandleFunc("/", s.addLink())
-	s.Post("/rm", s.removeLink())
 }
 
 func (s *server) addLink() http.HandlerFunc {
@@ -91,18 +95,20 @@ func (s *server) addLink() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		tmpl.Execute(w, sortLinks(m))
+		if err := tmpl.Execute(w, sortLinks(m)); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }
 
 func (s *server) removeLink() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		link := r.FormValue("link")
+		link := chi.URLParam(r, "link")
 		if err := s.cli.Delete(link); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(w, r, "/", http.StatusFound)
+		log.Printf("Removed %s", link)
 	}
 }
 
