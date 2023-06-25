@@ -26,7 +26,7 @@ const html = `
 </head>
 <body>
 <h1>➕ Add Link</h1>
-<form method="POST">
+<form id="link-form" method="POST">
   <table>
   <tr>
     <td><label>Link:</label></td>
@@ -41,12 +41,13 @@ const html = `
 </form>
 <h1>🔗 Links</h1>
 <table id="links">
-  <tr><th>Link</th><th>URI</th></tr>
+  <tr><th>Link</th><th></th><th></th><th>URI</th></tr>
   {{range .}}
   <tr>
     <td>{{.Link}}</td>
-    <td><a href="{{.URI}}">{{.URI}}</a></td>
+    <td><button title="Edit" data-edit="{{.Link}}">🖋️️</button></td>
     <td><button title="Delete" data-remove="{{.Link}}">❌</button></td>
+    <td><a id="{{.Link}}" href="{{.URI}}">{{.URI}}</a></td>
   </tr>
   {{end}}
 </table>
