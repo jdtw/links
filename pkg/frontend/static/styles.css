@@ -1,5 +1,4 @@
 body {
-  max-width: 40px auto;
   font-family: sans-serif;
   font-size: 18px;
   color: #444;
@@ -7,9 +6,26 @@ body {
 
 button {
   border: 0px;
-  background-color: white;
+  background-color: transparent;
 }
 
 button:hover {
   background-color: #ffc2c2;
+}
+
+#links {
+  border-collapse: collapse;
+}
+
+#links th {
+  text-align: left;
+}
+
+#links tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+#links td {
+  overflow: scroll;
+  white-space: nowrap;
 }
