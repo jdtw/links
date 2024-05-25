@@ -81,4 +81,18 @@ func TestClient(t *testing.T) {
 			t.Fatal("expected link foo to be deleted")
 		}
 	}
+	// Test that Put strips whitespace.
+	if err := c.Put(" whitespace ", "http://bar"); err != nil {
+		t.Fatalf("client.Put(whitespace, http://bar) failed: %v", err)
+	}
+	{
+		got, err := c.Get("whitespace")
+		if err != nil {
+			t.Fatalf("client.Get(whitespace) failed: %v", err)
+		}
+		if got != "http://bar" {
+			t.Fatalf("client.Get(whitespace) = %v, want http://bar", got)
+		}
+	}
+
 }

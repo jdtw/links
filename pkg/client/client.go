@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/encoding/protojson"
@@ -118,7 +119,7 @@ func (c *Client) Delete(link string) error {
 }
 
 func api(link string) string {
-	return path.Join(linksAPI, link)
+	return path.Join(linksAPI, strings.TrimSpace(link))
 }
 
 func marshal(m proto.Message) (io.Reader, error) {
