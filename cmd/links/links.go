@@ -52,10 +52,12 @@ func main() {
 		store = links.NewMemStore()
 	} else {
 		ctx := context.Background()
-		pgStore, err := links.NewPostgresStore(ctx, os.Getenv("DATABASE_URL"))
+		dbURL := os.Getenv("DATABASE_URL")
+		pgStore, err := links.NewPostgresStore(ctx, dbURL)
 		if err != nil {
 			log.Fatalf("links.NewPostgresStore failed: %v", err)
 		}
+		log.Printf("Connected to %s", dbURL)
 		store = pgStore
 		defer pgStore.Close()
 	}
