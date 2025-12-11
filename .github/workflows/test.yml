@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -22,19 +22,19 @@ jobs:
         ports:
           - 5432:5432
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.24.x
-    - name: Build
-      run: go build -v ./...
-    - name: Test
-      run: go test -v ./...
-    - name: Create Table
-      run: |
-        psql postgres://postgres:postgres@localhost:5432/postgres -a -c '\i links.sql'
-    - name: Integration Test
-      env:
-        DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-      run: ./test.sh
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.25.x
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -v ./...
+      - name: Create Table
+        run: |
+          psql postgres://postgres:postgres@localhost:5432/postgres -a -c '\i links.sql'
+      - name: Integration Test
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: ./test.sh

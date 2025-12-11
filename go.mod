@@ -1,14 +1,14 @@
 module jdtw.dev/links
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.6
 
 require (
-	github.com/go-chi/chi/v5 v5.0.12
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	google.golang.org/protobuf v1.36.7
+	google.golang.org/protobuf v1.36.10
 	jdtw.dev/token v0.1.5
 )
 
@@ -22,6 +22,6 @@ require (
 	github.com/jackc/pgtype v1.14.4 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
-	golang.org/x/text v0.28.0 // indirect
+	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
 )
