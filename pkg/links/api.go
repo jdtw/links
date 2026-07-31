@@ -61,6 +61,10 @@ func (s *server) put() http.HandlerFunc {
 		rid := middleware.GetReqID(r.Context())
 
 		l := normalizeKey(chi.URLParam(r, "link"))
+		if l == qrKey {
+			badRequest(w, "%q is a reserved link name", qrKey)
+			return
+		}
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			internalError(w, err, rid)

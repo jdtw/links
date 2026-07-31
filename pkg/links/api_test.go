@@ -224,6 +224,39 @@ func TestCRUD(t *testing.T) {
 	}()
 }
 
+func TestPutRejectsReservedQRKey(t *testing.T) {
+	keyset, priv := tokentest.GenerateKey(t, "test")
+	srv := NewHandler(NewMemStore(), keyset, 0)
+	serveHTTP := func(method, path string, body io.Reader) *http.Response {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(method, path, body)
+		signRequest(t, priv, req)
+		srv.ServeHTTP(rr, req)
+		return rr.Result()
+	}
+
+	tests := []string{"qr", "q-r"}
+	for _, key := range tests {
+		res := serveHTTP("PUT", "/api/links/"+key, marshalLink(t, "http://example.com"))
+		if sc := res.StatusCode; sc != http.StatusBadRequest {
+			t.Errorf("PUT /api/links/%s returned %d, want %d", key, sc, http.StatusBadRequest)
+		}
+	}
+
+	// QR-code generation for an existing link is unaffected.
+	serveHTTP("PUT", "/api/links/foo", marshalLink(t, "http://example.com"))
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/qr/foo", nil)
+	srv.ServeHTTP(rr, req)
+	res := rr.Result()
+	if sc := res.StatusCode; sc != http.StatusOK {
+		t.Fatalf("GET /qr/foo returned %d, want %d", sc, http.StatusOK)
+	}
+	if ct := res.Header.Get("Content-Type"); ct != "image/png" {
+		t.Errorf("GET /qr/foo returned Content-Type %q, want image/png", ct)
+	}
+}
+
 func TestPutNormalizesHyphenatedKeys(t *testing.T) {
 	keyset, priv := tokentest.GenerateKey(t, "test")
 	srv := NewHandler(NewMemStore(), keyset, 0)

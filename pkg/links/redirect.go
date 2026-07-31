@@ -14,6 +14,11 @@ import (
 // in the database as the "index" key.
 const Index = ".index"
 
+// qrKey is a reserved link key: a request whose first path segment is
+// qrKey renders a QR code instead of redirecting. A link stored under
+// this key would never be reachable, so put() rejects it.
+const qrKey = "qr"
+
 // normalizeKey strips hyphens from a link key, so that e.g. "my-link" and
 // "mylink" are treated as the same link. Hyphens are purely a readability
 // aid when typing a URL.
@@ -36,7 +41,7 @@ func (s *server) redirect() http.HandlerFunc {
 		}
 
 		// If prefixed with the /qr/ path, show a QR instead of redirecting.
-		qr := key == "qr"
+		qr := key == qrKey
 		if qr {
 			if len(paths) == 0 {
 				key = Index
