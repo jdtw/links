@@ -70,8 +70,9 @@ type server struct {
 
 func (s *server) routes() {
 	s.Handle("/static/*", http.FileServer(http.FS(static)))
-	s.Delete("/rm/{link}", s.removeLink())
-	s.HandleFunc("/", s.addLink())
+	s.With(sameOrigin).Delete("/rm/{link}", s.removeLink())
+	s.Get("/", s.addLink())
+	s.With(sameOrigin).Post("/", s.addLink())
 }
 
 func (s *server) addLink() http.HandlerFunc {
