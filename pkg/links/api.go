@@ -36,7 +36,7 @@ func (s *server) get() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rid := middleware.GetReqID(r.Context())
 
-		l := chi.URLParam(r, "link")
+		l := normalizeKey(chi.URLParam(r, "link"))
 		lepb, err := s.store.Get(r.Context(), l)
 		if err != nil {
 			internalError(w, err, rid)
@@ -60,7 +60,11 @@ func (s *server) put() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rid := middleware.GetReqID(r.Context())
 
-		l := chi.URLParam(r, "link")
+		l := normalizeKey(chi.URLParam(r, "link"))
+		if l == qrKey {
+			badRequest(w, "%q is a reserved link name", qrKey)
+			return
+		}
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			internalError(w, err, rid)
@@ -108,7 +112,7 @@ func (s *server) delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rid := middleware.GetReqID(r.Context())
 
-		l := chi.URLParam(r, "link")
+		l := normalizeKey(chi.URLParam(r, "link"))
 		s.store.Delete(r.Context(), l)
 		w.WriteHeader(http.StatusNoContent)
 		log.Printf("[%s] %s deleted %q", rid, subject(r.Context()), l)
