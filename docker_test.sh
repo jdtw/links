@@ -20,4 +20,6 @@ until docker-compose -f dev/docker-compose.yml exec db pg_isready; do
     sleep 1
 done
 
+go test ./...
+
 ./test.sh
