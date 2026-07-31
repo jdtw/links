@@ -14,6 +14,13 @@ import (
 // in the database as the "index" key.
 const Index = ".index"
 
+// normalizeKey strips hyphens from a link key, so that e.g. "my-link" and
+// "mylink" are treated as the same link. Hyphens are purely a readability
+// aid when typing a URL.
+func normalizeKey(k string) string {
+	return strings.ReplaceAll(k, "-", "")
+}
+
 func (s *server) redirect() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rid := middleware.GetReqID(r.Context())
@@ -39,7 +46,7 @@ func (s *server) redirect() http.HandlerFunc {
 		}
 
 		// Look up the key, and unmarshal the LinkEntry from the DB
-		key = strings.ReplaceAll(key, "-", "")
+		key = normalizeKey(key)
 		le, err := s.store.Get(r.Context(), key)
 		if err != nil {
 			internalError(w, err, rid)

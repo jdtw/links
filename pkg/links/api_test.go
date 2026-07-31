@@ -224,6 +224,53 @@ func TestCRUD(t *testing.T) {
 	}()
 }
 
+func TestPutNormalizesHyphenatedKeys(t *testing.T) {
+	keyset, priv := tokentest.GenerateKey(t, "test")
+	srv := NewHandler(NewMemStore(), keyset, 0)
+	serveHTTP := func(method, path string, body io.Reader) *http.Response {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(method, path, body)
+		signRequest(t, priv, req)
+		srv.ServeHTTP(rr, req)
+		return rr.Result()
+	}
+
+	uri := "http://example.com"
+	res := serveHTTP("PUT", "/api/links/fo-o", marshalLink(t, uri))
+	if sc := res.StatusCode; sc != http.StatusCreated {
+		t.Fatalf("PUT /api/links/fo-o returned %d, want %d", sc, http.StatusCreated)
+	}
+
+	// The link must be stored, and thus retrievable, under its normalized key...
+	res = serveHTTP("GET", "/api/links/foo", nil)
+	if sc := res.StatusCode; sc != http.StatusOK {
+		t.Fatalf("GET /api/links/foo returned %d, want %d", sc, http.StatusOK)
+	}
+	l := new(pb.Link)
+	unmarshal(t, res.Body, l)
+	if l.Uri != uri {
+		t.Errorf("GET /api/links/foo returned %v, want %q", l, uri)
+	}
+
+	// ... which also makes it reachable via the redirect handler.
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/f-oo", nil)
+	srv.ServeHTTP(rr, req)
+	if sc := rr.Result().StatusCode; sc != http.StatusFound {
+		t.Fatalf("GET /f-oo returned %d, want %d", sc, http.StatusFound)
+	}
+
+	// Deleting via a differently-hyphenated key removes the same entry.
+	res = serveHTTP("DELETE", "/api/links/f-o-o", nil)
+	if sc := res.StatusCode; sc != http.StatusNoContent {
+		t.Fatalf("DELETE /api/links/f-o-o returned %d, want %d", sc, http.StatusNoContent)
+	}
+	res = serveHTTP("GET", "/api/links/foo", nil)
+	if sc := res.StatusCode; sc != http.StatusNotFound {
+		t.Fatalf("GET /api/links/foo returned %d, want %d", sc, http.StatusNotFound)
+	}
+}
+
 func marshalLink(t *testing.T, uri string) io.Reader {
 	t.Helper()
 	l := &pb.Link{
