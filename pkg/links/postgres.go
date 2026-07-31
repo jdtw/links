@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	pb "jdtw.dev/links/proto/links"
 )
 
@@ -37,9 +37,9 @@ func NewPostgresStore(ctx context.Context, source string) (*PostgresStore, error
 		return nil, err
 	}
 	s := &PostgresStore{}
-	s.db, err = pgxpool.ConnectConfig(ctx, cfg)
+	s.db, err = pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("pgxpool.ConnectConfig failed: %w", err)
+		return nil, fmt.Errorf("pgxpool.NewWithConfig failed: %w", err)
 	}
 
 	if err := s.db.Ping(ctx); err != nil {
