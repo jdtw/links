@@ -13,7 +13,8 @@ import (
 const (
 	get = "select link, segments from links where path=$1"
 	put = `insert into links (path, link, segments) values ($1, $2, $3)
-         on conflict (path) do update set link=excluded.link, segments=excluded.segments`
+         on conflict (path) do update set link=excluded.link, segments=excluded.segments
+         returning (xmax = 0) as inserted`
 	del  = "delete from links where path=$1"
 	list = "select * from links"
 )
@@ -63,10 +64,9 @@ func (s *PostgresStore) Get(ctx context.Context, key string) (*pb.LinkEntry, err
 }
 
 func (s *PostgresStore) Put(ctx context.Context, key string, l *pb.Link) (bool, error) {
-	_, err := s.db.Exec(ctx, put, key, l.Uri, requiredPaths(l))
-	// Always returns true, since there's no easy way to differentiate
-	// created (true) vs updated.
-	return true, err
+	var created bool
+	err := s.db.QueryRow(ctx, put, key, l.Uri, requiredPaths(l)).Scan(&created)
+	return created, err
 }
 
 func (s *PostgresStore) Delete(ctx context.Context, key string) error {
