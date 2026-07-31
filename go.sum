@@ -223,5 +223,5 @@ gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt0JzvZhAg=
-jdtw.dev/token v0.1.5 h1:AjHaR0SvzieEHgJibttay29nFG2aZn4rfj72SPf5/lk=
-jdtw.dev/token v0.1.5/go.mod h1:JDLgs93I+O0JFT4FjP9HOTvPZoTPDxCDu5WU/fzJTF8=
+jdtw.dev/token v0.1.6 h1:EzvBOo0s+O4cudJqZob1ynhyIjtWfS85Oxfk/b0iqP4=
+jdtw.dev/token v0.1.6/go.mod h1:qr+zsFbOixxkv7T5Jb7rar/5Gs2yhw27vyNX0Q7pBA4=
