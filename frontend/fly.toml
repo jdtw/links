@@ -1,0 +1,32 @@
+# Fly config for the links web frontend.
+#
+# Deliberately declares no [[services]] and no [[http_service]]: the frontend
+# grants unauthenticated add/view access to every link, so it must never have
+# public ingress. Reachability comes solely from Tailscale Serve inside the
+# container, which means no dedicated IP is needed and none should be
+# allocated.
+#
+# Deploy from the repository root:
+#   fly deploy -c frontend/fly.toml
+app = "links-frontend"
+primary_region = "sjc"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[build]
+  dockerfile = "frontend/Dockerfile"
+
+[env]
+  PORT = "9099"
+  TS_HOSTNAME = "links"
+  LINKS_ADDR = "https://jdtw.us"
+
+[experimental]
+  auto_rollback = true
+
+# One always-on machine. Autostop is not usable here: Fly wakes stopped
+# machines from its own proxy, and tailnet traffic never passes through it,
+# so a stopped machine would simply be unreachable.
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
