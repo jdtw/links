@@ -13,7 +13,7 @@ import (
 const (
 	// sqliteSchema is applied on open so that a fresh database file (for
 	// example, a newly provisioned volume) is usable without any manual
-	// setup. It mirrors links.sql.
+	// setup.
 	sqliteSchema = `create table if not exists links (
   path text primary key,
   link text not null,
@@ -28,10 +28,9 @@ const (
 	sqliteList = "select path, link, segments from links"
 )
 
-// SQLiteStore is a Store backed by a local SQLite database file. It is the
-// low-cost alternative to PostgresStore: the link table is small enough that
-// a file on a mounted volume serves it fine, at the cost of pinning the app
-// to a single machine.
+// SQLiteStore is a Store backed by a local SQLite database file. The link
+// table is small enough that a file on a mounted volume serves it fine, at
+// the cost of pinning the app to a single machine in a single region.
 type SQLiteStore struct {
 	db *sql.DB
 }
@@ -85,7 +84,7 @@ func (s *SQLiteStore) Get(ctx context.Context, key string) (*pb.LinkEntry, error
 }
 
 // Put upserts the link and reports whether it was created rather than
-// updated. SQLite has no equivalent of Postgres' xmax trick, so the existence
+// updated. SQLite cannot report that from the upsert itself, so the existence
 // check and the write share a transaction to keep the answer accurate under
 // concurrent writers.
 func (s *SQLiteStore) Put(ctx context.Context, key string, l *pb.Link) (bool, error) {

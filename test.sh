@@ -4,6 +4,9 @@ set -euxo pipefail
 TEST_DIR="$(pwd)/testdir"
 export PORT=8080
 ADDR="http://localhost:${PORT}"
+# The server stores links in a SQLite file under the scratch directory, so
+# this suite needs no database server and the cleanup below discards it.
+export SQLITE_PATH="${TEST_DIR}/links.db"
 
 cleanup() {
        exit_status=$?
@@ -27,7 +30,6 @@ PRIV="${TEST_DIR}/priv.pb"
 "${TEST_DIR}/tokenpb" dump-keyset "${KEYSET}"
 export LINKS_KEYSET=$(base64 -i "${KEYSET}")
 
-mkdir "${TEST_DIR}/db"
 "${TEST_DIR}/links" &
 
 until curl -s "${ADDR}"; do

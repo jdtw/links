@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	ephemeral = flag.Bool("ephemeral", false, "If true, don't connect to DATABASE_URL and use in-memory storage")
+	ephemeral = flag.Bool("ephemeral", false, "If true, ignore SQLITE_PATH and use in-memory storage")
 )
 
 func main() {
@@ -46,16 +46,18 @@ func main() {
 	}
 	log.Printf("loaded keyset:\n%s", keyset)
 
-	// Storage precedence: -ephemeral wins, then SQLITE_PATH, then
-	// DATABASE_URL. Unsetting SQLITE_PATH reverts to Postgres.
+	// Storage is the SQLite database at SQLITE_PATH, unless -ephemeral asks
+	// for a throwaway in-memory store.
 	var store links.Store
 	ctx := context.Background()
-	sqlitePath := os.Getenv("SQLITE_PATH")
-	switch {
-	case *ephemeral:
+	if *ephemeral {
 		log.Printf("Running in ephemeral mode!")
 		store = links.NewMemStore()
-	case sqlitePath != "":
+	} else {
+		sqlitePath := os.Getenv("SQLITE_PATH")
+		if sqlitePath == "" {
+			log.Fatal("SQLITE_PATH environment variable must be set (or pass -ephemeral)")
+		}
 		sqliteStore, err := links.NewSQLiteStore(ctx, sqlitePath)
 		if err != nil {
 			log.Fatalf("links.NewSQLiteStore failed: %v", err)
@@ -63,14 +65,6 @@ func main() {
 		log.Printf("Opened SQLite database at %s", sqlitePath)
 		store = sqliteStore
 		defer sqliteStore.Close()
-	default:
-		pgStore, err := links.NewPostgresStore(ctx, os.Getenv("DATABASE_URL"))
-		if err != nil {
-			log.Fatalf("links.NewPostgresStore failed: %v", err)
-		}
-		log.Print("Connected to Postgres")
-		store = pgStore
-		defer pgStore.Close()
 	}
 
 	skew := time.Duration(0)
