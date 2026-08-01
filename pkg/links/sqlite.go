@@ -137,35 +137,3 @@ func (s *SQLiteStore) Visit(ctx context.Context, visit func(string, *pb.LinkEntr
 	}
 	return rows.Err()
 }
-
-// putEntry writes an entry verbatim, preserving the stored RequiredPaths
-// instead of recomputing it from the URI. Used by ImportFrom so that a
-// migration is a faithful copy rather than a re-derivation.
-func (s *SQLiteStore) putEntry(ctx context.Context, key string, le *pb.LinkEntry) error {
-	_, err := s.db.ExecContext(ctx, sqlitePut, key, le.Link.GetUri(), le.RequiredPaths)
-	return err
-}
-
-// ImportFrom copies every entry from src into dst, returning the number of
-// entries copied. Existing rows in dst with the same path are overwritten.
-func ImportFrom(ctx context.Context, dst *SQLiteStore, src Store) (int, error) {
-	type entry struct {
-		key string
-		le  *pb.LinkEntry
-	}
-	// Collect first: Visit holds a read lock on the source for its duration,
-	// and PostgresStore streams rows over the same pool the writes would use.
-	var entries []entry
-	if err := src.Visit(ctx, func(k string, le *pb.LinkEntry) {
-		entries = append(entries, entry{k, le})
-	}); err != nil {
-		return 0, fmt.Errorf("reading source store failed: %w", err)
-	}
-
-	for _, e := range entries {
-		if err := dst.putEntry(ctx, e.key, e.le); err != nil {
-			return 0, fmt.Errorf("writing %q failed: %w", e.key, err)
-		}
-	}
-	return len(entries), nil
-}

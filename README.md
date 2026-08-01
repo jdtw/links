@@ -54,8 +54,8 @@ safe.
 
 ### Migrating Postgres to SQLite
 
-The simplest route needs no database access at all -- export from the running
-server, point it at an empty SQLite file, and import:
+No database access is needed -- export from the running server, point it at
+an empty SQLite file, and import:
 
 1. `client --export links-backup.json` against the Postgres-backed server.
 2. Restart with `SQLITE_PATH` set, which creates and initializes an empty
@@ -64,16 +64,6 @@ server, point it at an empty SQLite file, and import:
 
 Keep the backup, and keep Postgres around until you're satisfied; unsetting
 `SQLITE_PATH` reverts to it with the original data untouched.
-
-Alternatively `cmd/migrate` copies directly from Postgres to a SQLite file
-and verifies each entry, for when the server isn't reachable but the database
-is. It never writes to Postgres, and rerunning it is safe.
-
-```
-$ DATABASE_URL="postgres://..." go run ./cmd/migrate -sqlite /data/links.db
-migrate: copied 42 entries
-migrate: verified 42 entries match the source
-```
 
 ### Tests
 
