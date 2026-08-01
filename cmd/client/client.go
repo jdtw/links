@@ -3,14 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"sort"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"jdtw.dev/links/pkg/client"
 	"jdtw.dev/links/pkg/frontend"
 	"jdtw.dev/links/pkg/links"
+	pb "jdtw.dev/links/proto/links"
 	"jdtw.dev/token"
 )
 
@@ -23,6 +26,8 @@ var (
 	get    = flag.String("get", "", "Get a redirect")
 	rm     = flag.String("rm", "", "Remove a redirect")
 	server = flag.Int("server", -1, "If not -1, starts starts a frontent HTTP server on the given port.")
+	export = flag.String("export", "", "Write all links as a JSON Links proto to the given file, or '-' for stdout")
+	imprt  = flag.String("import", "", "Bulk create or update links from a JSON Links proto file, or '-' for stdin")
 )
 
 func main() {
@@ -77,6 +82,43 @@ func main() {
 		if err := c.Delete(*rm); err != nil {
 			log.Fatal(err)
 		}
+	case *export != "":
+		lpb, err := c.Export()
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Indented so the backup is readable and reviewable. Note that
+		// protojson does not promise byte-stable output, so don't expect
+		// two exports of identical data to diff clean.
+		data, err := protojson.MarshalOptions{Multiline: true, Indent: "  "}.Marshal(lpb)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if *export == "-" {
+			os.Stdout.Write(data)
+		} else if err := os.WriteFile(*export, data, 0600); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("exported %d links", len(lpb.GetLinks()))
+	case *imprt != "":
+		var data []byte
+		var err error
+		if *imprt == "-" {
+			data, err = io.ReadAll(os.Stdin)
+		} else {
+			data, err = os.ReadFile(*imprt)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		lpb := &pb.Links{}
+		if err := protojson.Unmarshal(data, lpb); err != nil {
+			log.Fatalf("failed to parse %s: %v", *imprt, err)
+		}
+		if err := c.Import(lpb); err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("imported %d links", len(lpb.GetLinks()))
 	default:
 		l, err := c.List()
 		if err != nil {

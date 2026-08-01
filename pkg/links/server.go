@@ -28,6 +28,8 @@ func (s *server) routes() {
 		r.Use(s.authenticated())
 		// Get all links as a Links proto.
 		r.Get("/links", s.list())
+		// Bulk create or update from a Links proto.
+		r.Post("/links", s.bulkPut())
 		// Get a speficic link.
 		r.Get("/links/{link}", s.get())
 		// Create or update a link.
