@@ -18,6 +18,58 @@ Run `docker compose up` from the `dev/` directory to get a local instance runnin
 
 The server maintains a database of friendly names to URI redirect templates. For example, `rfc -> https://datatracker.ietf.org/doc/html/rfc{0}` will redirect `GET /rfc/5280` to `https://datatracker.ietf.org/doc/html/rfc5280`. Try it out: [jdtw.us/rfc/5280](https://jdtw.us/rfc/5280).
 
+## Storage
+
+The server picks its backing store from the environment, in this order:
+
+| Condition | Store |
+| --- | --- |
+| `--ephemeral` | in-memory, discarded on exit |
+| `SQLITE_PATH` set | SQLite database at that path |
+| otherwise | Postgres at `DATABASE_URL` |
+
+SQLite keeps the whole link table in a single file, which is enough for this
+workload and avoids paying for a managed Postgres instance. The tradeoff is
+that the file lives on one volume, so the app is pinned to a single machine
+in a single region and there is no replication. Postgres remains supported:
+unset `SQLITE_PATH` to switch back.
+
+The schema is applied automatically when the SQLite database is opened, so a
+freshly provisioned volume needs no manual setup.
+
+### Backup and restore
+
+The client can dump the whole link database to a file and load it back,
+which doubles as the migration path between storage backends:
+
+```
+$ client --export links-backup.json
+$ client --import links-backup.json
+```
+
+`--export` writes the same `links.Links` JSON proto that `GET /api/links`
+returns, indented for readability. `--import` posts it back. Both accept `-`
+for stdout/stdin. Importing is additive and idempotent, so re-running it is
+safe.
+
+### Migrating Postgres to SQLite
+
+No database access is needed -- export from the running server, point it at
+an empty SQLite file, and import:
+
+1. `client --export links-backup.json` against the Postgres-backed server.
+2. Restart with `SQLITE_PATH` set, which creates and initializes an empty
+   database file.
+3. `client --import links-backup.json`.
+
+Keep the backup, and keep Postgres around until you're satisfied; unsetting
+`SQLITE_PATH` reverts to it with the original data untouched.
+
+### Tests
+
+`./sqlite_test.sh` runs the full suite against SQLite and needs no database
+server. `./docker_test.sh` does the same against Postgres in a container.
+
 ## REST API
 
 * `GET /api/links` returns all links in the database.
@@ -28,6 +80,13 @@ The server maintains a database of friendly names to URI redirect templates. For
   * Request body: empty
   * Response body: `links.Link` JSON proto.
   * Returns: 200 (OK) or 404 (not found)
+* `POST /api/links` bulk creates or updates links.
+  * Request body: `links.Links` JSON proto, the same shape `GET /api/links` returns.
+  * Response body: empty
+  * Returns: 204 (no content), or 400 if any link is invalid.
+  * Additive: links already stored that the body does not mention are left
+    alone. Every entry is validated before anything is written, so one bad
+    link fails the whole request rather than half-applying the import.
 * `PUT /api/links/{link}` creates or updates a link.
   * Request body: `links.Link` JSON proto.
   * Response body: empty

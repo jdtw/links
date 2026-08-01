@@ -82,6 +82,38 @@ func (c *Client) List() (map[string]string, error) {
 	return l, nil
 }
 
+// Export returns every link as a Links proto, preserving the exact shape the
+// server stores. Unlike List, which flattens to a map of strings for display,
+// the result round-trips through Import.
+func (c *Client) Export() (*pb.Links, error) {
+	resp, err := c.do("GET", linksAPI, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	lpb := &pb.Links{}
+	if err := unmarshalBody(resp, lpb); err != nil {
+		return nil, err
+	}
+	return lpb, nil
+}
+
+// Import bulk-creates or updates every link in lpb. Links already on the
+// server that lpb does not mention are left alone.
+func (c *Client) Import(lpb *pb.Links) error {
+	body, err := marshal(lpb)
+	if err != nil {
+		return err
+	}
+	resp, err := c.do("POST", linksAPI, body)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	return nil
+}
+
 func (c *Client) Get(link string) (string, error) {
 	resp, err := c.do("GET", api(link), nil)
 	if err != nil {

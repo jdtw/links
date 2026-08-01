@@ -46,18 +46,29 @@ func main() {
 	}
 	log.Printf("loaded keyset:\n%s", keyset)
 
+	// Storage precedence: -ephemeral wins, then SQLITE_PATH, then
+	// DATABASE_URL. Unsetting SQLITE_PATH reverts to Postgres.
 	var store links.Store
-	if *ephemeral {
+	ctx := context.Background()
+	sqlitePath := os.Getenv("SQLITE_PATH")
+	switch {
+	case *ephemeral:
 		log.Printf("Running in ephemeral mode!")
 		store = links.NewMemStore()
-	} else {
-		ctx := context.Background()
-		dbURL := os.Getenv("DATABASE_URL")
-		pgStore, err := links.NewPostgresStore(ctx, dbURL)
+	case sqlitePath != "":
+		sqliteStore, err := links.NewSQLiteStore(ctx, sqlitePath)
+		if err != nil {
+			log.Fatalf("links.NewSQLiteStore failed: %v", err)
+		}
+		log.Printf("Opened SQLite database at %s", sqlitePath)
+		store = sqliteStore
+		defer sqliteStore.Close()
+	default:
+		pgStore, err := links.NewPostgresStore(ctx, os.Getenv("DATABASE_URL"))
 		if err != nil {
 			log.Fatalf("links.NewPostgresStore failed: %v", err)
 		}
-		log.Printf("Connected to %s", dbURL)
+		log.Print("Connected to Postgres")
 		store = pgStore
 		defer pgStore.Close()
 	}
