@@ -20,27 +20,25 @@ The server maintains a database of friendly names to URI redirect templates. For
 
 ## Storage
 
-The server picks its backing store from the environment, in this order:
+Links live in a SQLite database at `SQLITE_PATH`, which the server requires
+unless `--ephemeral` is passed for a throwaway in-memory store:
 
 | Condition | Store |
 | --- | --- |
 | `--ephemeral` | in-memory, discarded on exit |
-| `SQLITE_PATH` set | SQLite database at that path |
-| otherwise | Postgres at `DATABASE_URL` |
+| otherwise | SQLite database at `SQLITE_PATH` |
 
-SQLite keeps the whole link table in a single file, which is enough for this
-workload and avoids paying for a managed Postgres instance. The tradeoff is
-that the file lives on one volume, so the app is pinned to a single machine
-in a single region and there is no replication. Postgres remains supported:
-unset `SQLITE_PATH` to switch back.
+The whole link table is a single three-column relation, so a file on a
+mounted volume serves it comfortably and there is no database server to run.
+The tradeoff is that the file lives on one volume, pinning the app to a
+single machine in a single region with no replication.
 
-The schema is applied automatically when the SQLite database is opened, so a
-freshly provisioned volume needs no manual setup.
+The schema is applied automatically when the database is opened, so a freshly
+provisioned volume needs no manual setup.
 
 ### Backup and restore
 
-The client can dump the whole link database to a file and load it back,
-which doubles as the migration path between storage backends:
+The client can dump the whole link database to a file and load it back:
 
 ```
 $ client --export links-backup.json
@@ -52,23 +50,14 @@ returns, indented for readability. `--import` posts it back. Both accept `-`
 for stdout/stdin. Importing is additive and idempotent, so re-running it is
 safe.
 
-### Migrating Postgres to SQLite
-
-No database access is needed -- export from the running server, point it at
-an empty SQLite file, and import:
-
-1. `client --export links-backup.json` against the Postgres-backed server.
-2. Restart with `SQLITE_PATH` set, which creates and initializes an empty
-   database file.
-3. `client --import links-backup.json`.
-
-Keep the backup, and keep Postgres around until you're satisfied; unsetting
-`SQLITE_PATH` reverts to it with the original data untouched.
+Since the database is a single file, a volume snapshot works too -- but an
+export is portable, diffable, and does not depend on the host.
 
 ### Tests
 
-`./sqlite_test.sh` runs the full suite against SQLite and needs no database
-server. `./docker_test.sh` does the same against Postgres in a container.
+`go test ./...` covers the packages. `./test.sh` runs the end-to-end suite
+against a real server; it provisions its own SQLite file in a scratch
+directory, so it needs no database server and leaves nothing behind.
 
 ## REST API
 

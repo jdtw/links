@@ -190,7 +190,7 @@ func TestBulkPutRequiresAuth(t *testing.T) {
 }
 
 // Export then import must reproduce the original set exactly -- this is the
-// property the Postgres -> SQLite migration relies on.
+// property backup and restore relies on.
 func TestExportImportRoundTrip(t *testing.T) {
 	keyset, priv := tokentest.GenerateKey(t, "test")
 	ctx := context.Background()

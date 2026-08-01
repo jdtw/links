@@ -1,18 +1,4 @@
 services:
-  db:
-    image: postgres
-    user: postgres
-    volumes:
-      - ../links.sql:/docker-entrypoint-initdb.d/links.sql
-    ports:
-      - 15432:5432
-    environment:
-      POSTGRES_PASSWORD: postgres
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
-      interval: 1s
-      timeout: 5s
-      retries: 5
   links:
     build:
       context: ..
@@ -21,10 +7,9 @@ services:
       - 8080:8080
     environment:
       LINKS_KEYSET: ${KEYSET}
-      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
-    depends_on:
-      db:
-        condition: service_healthy
+      SQLITE_PATH: /data/links.db
+    volumes:
+      - links_data:/data
   links-client:
     build:
       context: ..
@@ -37,3 +22,6 @@ services:
       LINKS_ADDR: http://links:8080
     depends_on:
       - links
+
+volumes:
+  links_data:

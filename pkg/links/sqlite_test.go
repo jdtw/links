@@ -9,8 +9,7 @@ import (
 )
 
 // newTestSQLiteStore opens a store backed by a file in the test's temp
-// directory. Unlike the Postgres tests these need no external service, so
-// they always run.
+// directory. These need no external service, so they always run.
 func newTestSQLiteStore(t *testing.T) *SQLiteStore {
 	t.Helper()
 	s, err := NewSQLiteStore(context.Background(), filepath.Join(t.TempDir(), "links.db"))
@@ -84,7 +83,7 @@ func TestSQLiteDelete(t *testing.T) {
 }
 
 // Deleting a key that was never present should be a no-op, matching the
-// Postgres store's behavior.
+// in-memory store's behavior.
 func TestSQLiteDeleteMissingKeyIsNoOp(t *testing.T) {
 	s := newTestSQLiteStore(t)
 	if err := s.Delete(context.Background(), "neverexisted"); err != nil {

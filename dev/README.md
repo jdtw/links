@@ -2,11 +2,10 @@
 
 This directory contains a docker compose file config that can be used to test locally end-to-end. Running `docker compose up` will:
 
-- Start postgres.
-- Start a links server on port 8080.
+- Start a links server on port 8080, backed by a SQLite database on the `links_data` volume.
 - Start a links web client on port 9090.
 
-Connect directly to the postgres instance using `postgres://postgres:postgres@localhost:15432/postgres`, or use the `psql.sh` script. Note that port is 15432 so that it doesn't conflict with any local postgres installation.
+The database persists across restarts in that volume. To start from an empty database, run `docker compose down -v`.
 
 Add a link to the server using the frontend at http://localhost:9090.
 
