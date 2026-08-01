@@ -2,19 +2,23 @@
 #
 # Deliberately declares no [[services]] and no [[http_service]]: the frontend
 # grants unauthenticated add/view access to every link, so it must never have
-# public ingress. Reachability comes solely from Tailscale Serve inside the
+# public ingress. Reachability comes solely from Tailscale inside the
 # container, which means no dedicated IP is needed and none should be
-# allocated.
+# allocated. `fly ips list` should stay empty.
 #
-# Deploy from the repository root:
-#   fly deploy -c frontend/fly.toml
+# Deploy from the repository root, passing it explicitly as the build context
+# so the Dockerfile can reach the Go sources:
+#   fly deploy . -c frontend/fly.toml
+#
+# Note that `dockerfile` below is resolved relative to THIS file, not to the
+# build context.
 app = "links-frontend"
 primary_region = "sjc"
 kill_signal = "SIGINT"
 kill_timeout = "5s"
 
 [build]
-  dockerfile = "frontend/Dockerfile"
+  dockerfile = "Dockerfile"
 
 [env]
   PORT = "9099"
