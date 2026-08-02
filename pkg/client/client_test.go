@@ -1,51 +1,28 @@
 package client
 
 import (
-	"context"
 	"errors"
-	"fmt"
-	"net"
-	"net/http"
-	"sync"
+	"net/http/httptest"
 	"testing"
 
 	"jdtw.dev/links/pkg/links"
 	"jdtw.dev/links/pkg/tokentest"
 )
 
-func getFreePort(t *testing.T) int {
-	t.Helper()
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		t.Fatalf("net.ResolveTCPAddr failed: %v", err)
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		t.Fatalf("net.ListenTCP failed: %v", err)
-	}
-	defer l.Close()
-	return l.Addr().(*net.TCPAddr).Port
-}
-
 func TestClient(t *testing.T) {
 	ks, signer := tokentest.GenerateKey(t, "test")
 	store := links.NewMemStore()
-	var wg sync.WaitGroup
-	wg.Add(1)
-	addr := fmt.Sprintf("localhost:%d", getFreePort(t))
-	s := &http.Server{Addr: addr, Handler: links.NewHandler(store, ks, 0)}
-	go func() {
-		defer wg.Done()
-		s.ListenAndServe()
-	}()
-	ctx := context.Background()
-	t.Cleanup(func() {
-		s.Shutdown(ctx)
-		wg.Wait()
-	})
 
-	c := New("http://"+addr, signer)
+	// httptest.NewServer binds before it returns, so the client below cannot
+	// race the listener. The previous version picked a port, closed it, then
+	// started the server in a goroutine and immediately dialed -- which meant
+	// the request could arrive before the server was listening (and left a
+	// window for another process to take the port). That raced on loaded CI
+	// runners.
+	s := httptest.NewServer(links.NewHandler(store, ks, 0))
+	t.Cleanup(s.Close)
+
+	c := New(s.URL, signer)
 	if _, err := c.Get("foo"); !errors.Is(err, ErrNotFound) {
 		t.Errorf("Get(foo) returned %v; want err %v", err, ErrNotFound)
 	}
